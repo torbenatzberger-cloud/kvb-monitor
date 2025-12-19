@@ -3,10 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // === CONFIG ===
-const APP_VERSION = '1.0.3';
+const APP_VERSION = '1.1.0';
 
 // === CHANGELOG ===
 const CHANGELOG = [
+  {
+    version: '1.1.0',
+    date: '19.12.2025',
+    changes: [
+      'Vereinfacht: Stationsauswahl entfernt (fix auf Theodolindenplatz)',
+      'Gehzeit-Einstellung jetzt immer sichtbar',
+      'UI aufgeräumt',
+    ],
+  },
   {
     version: '1.0.3',
     date: '19.12.2025',
@@ -61,17 +70,8 @@ const LINE_COLORS = {
   '22': '#96c11e', '23': '#96c11e', '25': '#96c11e', '27': '#96c11e', '28': '#96c11e',
 };
 
-// Beliebte Haltestellen München
-const POPULAR_STOPS = [
-  { name: 'Theodolindenplatz', id: 'de:09162:1122' },
-  { name: 'Marienplatz', id: 'de:09162:2' },
-  { name: 'Hauptbahnhof', id: 'de:09162:6' },
-  { name: 'Sendlinger Tor', id: 'de:09162:10' },
-  { name: 'Münchner Freiheit', id: 'de:09162:50' },
-  { name: 'Ostbahnhof', id: 'de:09162:70' },
-  { name: 'Rotkreuzplatz', id: 'de:09162:90' },
-  { name: 'Karlsplatz (Stachus)', id: 'de:09162:3' },
-];
+// Feste Haltestelle (für Philipp)
+const STATION = { name: 'Theodolindenplatz', id: 'de:09162:1122' };
 
 // === FILTER CONFIG ===
 // Nur Linie 25 Richtung Max-Weber-Platz anzeigen
@@ -868,8 +868,6 @@ export default function MuenchenMonitor() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [walkTime, setWalkTime] = useState(7);
-  const [selectedStop, setSelectedStop] = useState(POPULAR_STOPS[0]);
-  const [showSettings, setShowSettings] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -885,12 +883,6 @@ export default function MuenchenMonitor() {
     const saved = loadSettings();
     if (saved) {
       if (saved.walkTime) setWalkTime(saved.walkTime);
-      if (saved.selectedStop) {
-        const found = POPULAR_STOPS.find(s => s.id === saved.selectedStop.id);
-        if (found) {
-          setSelectedStop(found);
-        }
-      }
     }
     setSettingsLoaded(true);
     setMounted(true); // Client is now hydrated
@@ -901,9 +893,8 @@ export default function MuenchenMonitor() {
     if (!settingsLoaded) return;
     saveSettings({
       walkTime,
-      selectedStop,
     });
-  }, [walkTime, selectedStop, settingsLoaded]);
+  }, [walkTime, settingsLoaded]);
 
   // Update every second
   useEffect(() => {
@@ -935,7 +926,7 @@ export default function MuenchenMonitor() {
     if (showRefreshIndicator) setRefreshing(true);
     
     try {
-      const url = `/api/muenchen/departures/${selectedStop.id}`;
+      const url = `/api/muenchen/departures/${STATION.id}`;
       const response = await fetch(url);
       const data = await response.json();
       
@@ -952,7 +943,7 @@ export default function MuenchenMonitor() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedStop.id]);
+  }, []);
 
   const handleManualRefresh = () => {
     fetchDepartures(true);
@@ -987,16 +978,13 @@ export default function MuenchenMonitor() {
         <div style={styles.headerLeft}>
           <div style={styles.logo}>MVG</div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '16px' }}>{selectedStop.name}</div>
+            <div style={{ fontWeight: 700, fontSize: '16px' }}>{STATION.name}</div>
             <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '2px' }}>
               {mounted ? currentTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
             </div>
           </div>
         </div>
         <div style={styles.headerButtons}>
-          <button style={styles.settingsBtn} onClick={() => setShowSettings(!showSettings)}>
-            ⚙️
-          </button>
           <button style={styles.refreshBtn} onClick={handleManualRefresh}>
             <span style={{ 
               display: 'inline-block',
@@ -1027,48 +1015,21 @@ export default function MuenchenMonitor() {
         Richtung {FILTER_DIRECTION}
       </div>
 
-      {/* Settings Panel */}
-      {showSettings && (
-        <div style={styles.settingsPanel}>
-          {/* Gehzeit mit +/- */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '12px' }}>
-              🚶 Gehzeit zur Haltestelle
-            </div>
-            <WalkTimeStepper 
-              value={walkTime} 
-              onChange={setWalkTime}
-              accentColor="#0065ae"
-            />
-          </div>
-
-          {/* Haltestelle */}
-          <div>
-            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
-              🚏 Haltestelle
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-              {POPULAR_STOPS.map(stop => (
-                <button
-                  key={stop.id}
-                  onClick={() => {
-                    setSelectedStop(stop);
-                    setDisplayCount(10);
-                    setLoading(true);
-                  }}
-                  style={{
-                    ...styles.stopBtn,
-                    background: selectedStop.id === stop.id ? '#0065ae' : 'transparent',
-                    borderColor: selectedStop.id === stop.id ? '#0065ae' : 'rgba(255,255,255,0.2)',
-                  }}
-                >
-                  {stop.name}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Gehzeit Einstellung - immer sichtbar */}
+      <div style={{
+        padding: '12px 16px',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        background: 'rgba(0,0,0,0.2)',
+      }}>
+        <div style={{ fontSize: '11px', opacity: 0.5, marginBottom: '8px', textAlign: 'center' }}>
+          🚶 Gehzeit zur Haltestelle
         </div>
-      )}
+        <WalkTimeStepper 
+          value={walkTime} 
+          onChange={setWalkTime}
+          accentColor="#0065ae"
+        />
+      </div>
 
       {/* Leave Timer - Single */}
       {mainDirection && (
