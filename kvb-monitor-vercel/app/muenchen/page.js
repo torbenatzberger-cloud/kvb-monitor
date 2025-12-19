@@ -3,10 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // === CONFIG ===
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.0.3';
 
 // === CHANGELOG ===
 const CHANGELOG = [
+  {
+    version: '1.0.3',
+    date: '19.12.2025',
+    changes: [
+      'Fix: Vergangene Bahnen werden jetzt korrekt als "weg" angezeigt',
+      'Fix: Bahnen die länger als 1 Min weg sind werden ausgeblendet',
+      'Fix: 12-Stunden-Schwelle für Tag/Nacht-Berechnung',
+    ],
+  },
   {
     version: '1.0.2',
     date: '19.12.2025',
@@ -84,8 +93,9 @@ function calculateSecondsUntil(hour, minute) {
   const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   let departureSeconds = hour * 3600 + minute * 60;
   
-  // Nur für Zeiten die mehr als 1 Stunde in der Vergangenheit liegen → nächster Tag
-  if (departureSeconds < nowSeconds - 3600) {
+  // Nur für Zeiten die mehr als 12 Stunden in der Vergangenheit liegen → nächster Tag
+  // (vorher 1 Stunde - das war zu kurz!)
+  if (departureSeconds < nowSeconds - 12 * 3600) {
     departureSeconds += 24 * 3600;
   }
   
@@ -916,6 +926,8 @@ export default function MuenchenMonitor() {
       secondsUntil: calculateSecondsUntil(dep.realtimeHour, dep.realtimeMinute),
       minutesUntil: Math.floor(calculateSecondsUntil(dep.realtimeHour, dep.realtimeMinute) / 60)
     }))
+    // Filter: Bahnen die mehr als 1 Minute vorbei sind ausblenden
+    .filter(dep => dep.secondsUntil > -60)
     .sort((a, b) => a.secondsUntil - b.secondsUntil);
 
   // Fetch departures
@@ -1175,7 +1187,7 @@ export default function MuenchenMonitor() {
                         fontWeight: 700,
                         fontVariantNumeric: 'tabular-nums',
                       }}>
-                        {!mounted ? '--' : dep.secondsUntil <= 30 ? 'jetzt' : `${dep.minutesUntil}'`}
+                        {!mounted ? '--' : dep.secondsUntil < -30 ? 'weg' : dep.secondsUntil <= 30 ? 'jetzt' : `${dep.minutesUntil}'`}
                       </div>
                     </div>
                   </div>
