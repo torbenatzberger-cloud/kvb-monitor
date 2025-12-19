@@ -3,10 +3,17 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // === CONFIG ===
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 
 // === CHANGELOG ===
 const CHANGELOG = [
+  {
+    version: '1.0.1',
+    date: '19.12.2025',
+    changes: [
+      'Fix: Hydration-Fehler behoben (alle Bahnen zeigten "jetzt")',
+    ],
+  },
   {
     version: '1.0.0',
     date: '19.12.2025',
@@ -276,10 +283,10 @@ const styles = {
 };
 
 // === COMPONENTS ===
-function ProgressBar({ secondsUntilLeave, walkTimeSeconds }) {
+function ProgressBar({ secondsUntilLeave, walkTimeSeconds, mounted = false }) {
   const maxBuffer = walkTimeSeconds;
   const timeUsed = maxBuffer - secondsUntilLeave;
-  const progress = Math.min(100, Math.max(0, (timeUsed / maxBuffer) * 100));
+  const progress = mounted ? Math.min(100, Math.max(0, (timeUsed / maxBuffer) * 100)) : 0;
   
   let barColor = '#00c853';
   if (progress >= 95) {
@@ -309,11 +316,11 @@ function ProgressBar({ secondsUntilLeave, walkTimeSeconds }) {
   );
 }
 
-function LeaveTimerCard({ direction, walkTimeSeconds }) {
+function LeaveTimerCard({ direction, walkTimeSeconds, mounted = false }) {
   const { name, nextDeparture } = direction;
   const secondsUntilLeave = Math.max(0, nextDeparture.secondsUntil - walkTimeSeconds);
-  const isUrgent = secondsUntilLeave <= 30;
-  const isSoon = secondsUntilLeave > 30 && secondsUntilLeave <= 120;
+  const isUrgent = mounted && secondsUntilLeave <= 30;
+  const isSoon = mounted && secondsUntilLeave > 30 && secondsUntilLeave <= 120;
 
   const cardStyle = {
     background: 'rgba(255,255,255,0.05)',
@@ -357,13 +364,13 @@ function LeaveTimerCard({ direction, walkTimeSeconds }) {
         fontVariantNumeric: 'tabular-nums',
         ...(isUrgent && { animation: 'blink 1s infinite' }),
       }}>
-        {secondsUntilLeave <= 0 ? 'JETZT!' : formatTime(secondsUntilLeave)}
+        {!mounted ? '--:--' : secondsUntilLeave <= 0 ? 'JETZT!' : formatTime(secondsUntilLeave)}
       </div>
       <div style={{ fontSize: '14px', opacity: 0.7, marginBottom: '4px' }}>
-        {secondsUntilLeave <= 0 ? 'Loslaufen!' : 'bis loslaufen'}
+        {!mounted ? 'wird geladen...' : secondsUntilLeave <= 0 ? 'Loslaufen!' : 'bis loslaufen'}
       </div>
       
-      <ProgressBar secondsUntilLeave={secondsUntilLeave} walkTimeSeconds={walkTimeSeconds} />
+      <ProgressBar secondsUntilLeave={secondsUntilLeave} walkTimeSeconds={walkTimeSeconds} mounted={mounted} />
       
       <div style={{
         display: 'inline-block',
@@ -376,7 +383,7 @@ function LeaveTimerCard({ direction, walkTimeSeconds }) {
         color: isUrgent || isSoon ? '#fff' : 'rgba(255,255,255,0.7)',
         ...(isUrgent && { animation: 'pulse 1s infinite' }),
       }}>
-        {isUrgent ? '🏃 JETZT LOS!' : isSoon ? '👟 Fertig machen!' : '😌 Zeit genug'}
+        {!mounted ? '⏳ Laden...' : isUrgent ? '🏃 JETZT LOS!' : isSoon ? '👟 Fertig machen!' : '😌 Zeit genug'}
       </div>
       <div style={{ fontSize: '11px', opacity: 0.5, marginTop: '10px' }}>
         {nextDeparture.line} • Abfahrt {nextDeparture.realtimeTimeFormatted}
@@ -848,6 +855,7 @@ export default function MuenchenMonitor() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [displayCount, setDisplayCount] = useState(10);
+  const [mounted, setMounted] = useState(false);
 
   const walkTimeSeconds = walkTime * 60;
 
@@ -864,6 +872,7 @@ export default function MuenchenMonitor() {
       }
     }
     setSettingsLoaded(true);
+    setMounted(true); // Client is now hydrated
   }, []);
 
   // Save settings when they change
@@ -1045,6 +1054,7 @@ export default function MuenchenMonitor() {
             <LeaveTimerCard 
               direction={mainDirection} 
               walkTimeSeconds={walkTimeSeconds}
+              mounted={mounted}
             />
           </div>
         </div>
@@ -1133,7 +1143,7 @@ export default function MuenchenMonitor() {
                         textOverflow: 'ellipsis',
                       }}>
                         {getShortDirection(dep.direction)}
-                        {isUnreachable && <span style={{ marginLeft: '8px', fontSize: '11px', color: '#ff6b6b' }}>verpasst</span>}
+                        {mounted && isUnreachable && <span style={{ marginLeft: '8px', fontSize: '11px', color: '#ff6b6b' }}>verpasst</span>}
                       </div>
                       <div style={{
                         marginTop: '3px',
@@ -1154,7 +1164,7 @@ export default function MuenchenMonitor() {
                         fontWeight: 700,
                         fontVariantNumeric: 'tabular-nums',
                       }}>
-                        {dep.secondsUntil <= 30 ? 'jetzt' : `${dep.minutesUntil}'`}
+                        {!mounted ? '--' : dep.secondsUntil <= 30 ? 'jetzt' : `${dep.minutesUntil}'`}
                       </div>
                     </div>
                   </div>
