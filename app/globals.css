@@ -1,0 +1,45 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --kvb-red: #e30613;
+  --kvb-red-dark: #c10510;
+  --bg-dark: #0a0a0a;
+  --bg-card: rgba(255,255,255,0.05);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255,255,255,0.6);
+  --success: #00c853;
+  --warning: #ff6b6b;
+  --orange: #f39200;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes urgentPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(227,6,19,0.4); }
+  50% { box-shadow: 0 0 30px 8px rgba(227,6,19,0.5); }
+}
