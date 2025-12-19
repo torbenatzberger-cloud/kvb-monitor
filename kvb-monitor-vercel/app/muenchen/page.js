@@ -3,10 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // === CONFIG ===
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 
 // === CHANGELOG ===
 const CHANGELOG = [
+  {
+    version: '1.0.2',
+    date: '19.12.2025',
+    changes: [
+      'Fix: Hydration-Fehler vollständig behoben',
+      'Fix: Uhrzeit-Anzeige korrigiert',
+      'Fix: "verpasst" Label korrigiert',
+    ],
+  },
   {
     version: '1.0.1',
     date: '19.12.2025',
@@ -75,11 +84,13 @@ function calculateSecondsUntil(hour, minute) {
   const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   let departureSeconds = hour * 3600 + minute * 60;
   
+  // Nur für Zeiten die mehr als 1 Stunde in der Vergangenheit liegen → nächster Tag
   if (departureSeconds < nowSeconds - 3600) {
     departureSeconds += 24 * 3600;
   }
   
-  return Math.max(0, departureSeconds - nowSeconds);
+  // Erlaube negative Werte für vergangene Abfahrten
+  return departureSeconds - nowSeconds;
 }
 
 function formatTime(totalSeconds) {
@@ -966,7 +977,7 @@ export default function MuenchenMonitor() {
           <div>
             <div style={{ fontWeight: 700, fontSize: '16px' }}>{selectedStop.name}</div>
             <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '2px' }}>
-              {currentTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+              {mounted ? currentTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
             </div>
           </div>
         </div>
@@ -1119,7 +1130,7 @@ export default function MuenchenMonitor() {
             </p>
             <div>
               {departuresWithTime.slice(0, displayCount).map((dep, index) => {
-                const isUnreachable = dep.secondsUntil < walkTimeSeconds;
+                const isUnreachable = mounted && dep.secondsUntil < walkTimeSeconds;
                 return (
                   <div 
                     key={`${dep.line}-${dep.direction}-${index}`} 
@@ -1143,7 +1154,7 @@ export default function MuenchenMonitor() {
                         textOverflow: 'ellipsis',
                       }}>
                         {getShortDirection(dep.direction)}
-                        {mounted && isUnreachable && <span style={{ marginLeft: '8px', fontSize: '11px', color: '#ff6b6b' }}>verpasst</span>}
+                        {isUnreachable && <span style={{ marginLeft: '8px', fontSize: '11px', color: '#ff6b6b' }}>verpasst</span>}
                       </div>
                       <div style={{
                         marginTop: '3px',
@@ -1203,8 +1214,8 @@ export default function MuenchenMonitor() {
               opacity: 0.4,
               marginTop: '20px',
             }}>
-              {lastUpdate && `Aktualisiert: ${lastUpdate.toLocaleTimeString('de-DE')}`}
-              {' • '}Auto-Refresh 10s
+              {mounted && lastUpdate && `Aktualisiert: ${lastUpdate.toLocaleTimeString('de-DE')}`}
+              {mounted && ' • '}Auto-Refresh 10s
             </div>
           </>
         )}
