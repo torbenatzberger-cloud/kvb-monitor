@@ -1,0 +1,188 @@
+{
+  "de:09162:2": {
+    "id": "de:09162:2",
+    "name": "Marienplatz",
+    "lat": 48.1374,
+    "lng": 11.5755
+  },
+  "de:09162:6": {
+    "id": "de:09162:6",
+    "name": "Karlsplatz (Stachus)",
+    "lat": 48.1392,
+    "lng": 11.5661
+  },
+  "de:09162:10": {
+    "id": "de:09162:10",
+    "name": "Sendlinger Tor",
+    "lat": 48.1349,
+    "lng": 11.5675
+  },
+  "de:09162:70": {
+    "id": "de:09162:70",
+    "name": "Odeonsplatz",
+    "lat": 48.1428,
+    "lng": 11.5773
+  },
+  "de:09162:90": {
+    "id": "de:09162:90",
+    "name": "München Hauptbahnhof",
+    "lat": 48.1402,
+    "lng": 11.5583
+  },
+  "de:09162:100": {
+    "id": "de:09162:100",
+    "name": "Münchner Freiheit",
+    "lat": 48.1630,
+    "lng": 11.5881
+  },
+  "de:09162:110": {
+    "id": "de:09162:110",
+    "name": "Giselastraße",
+    "lat": 48.1549,
+    "lng": 11.5824
+  },
+  "de:09162:120": {
+    "id": "de:09162:120",
+    "name": "Universität",
+    "lat": 48.1506,
+    "lng": 11.5809
+  },
+  "de:09162:130": {
+    "id": "de:09162:130",
+    "name": "Scheidplatz",
+    "lat": 48.1698,
+    "lng": 11.5783
+  },
+  "de:09162:140": {
+    "id": "de:09162:140",
+    "name": "Petuelring",
+    "lat": 48.1757,
+    "lng": 11.5709
+  },
+  "de:09162:150": {
+    "id": "de:09162:150",
+    "name": "Olympiazentrum",
+    "lat": 48.1771,
+    "lng": 11.5524
+  },
+  "de:09162:160": {
+    "id": "de:09162:160",
+    "name": "Olympia-Einkaufszentrum",
+    "lat": 48.1761,
+    "lng": 11.5347
+  },
+  "de:09162:170": {
+    "id": "de:09162:170",
+    "name": "Moosach",
+    "lat": 48.1777,
+    "lng": 11.5117
+  },
+  "de:09162:180": {
+    "id": "de:09162:180",
+    "name": "Westfriedhof",
+    "lat": 48.1699,
+    "lng": 11.5243
+  },
+  "de:09162:200": {
+    "id": "de:09162:200",
+    "name": "Ostbahnhof",
+    "lat": 48.1277,
+    "lng": 11.6044
+  },
+  "de:09162:210": {
+    "id": "de:09162:210",
+    "name": "Max-Weber-Platz",
+    "lat": 48.1313,
+    "lng": 11.5956
+  },
+  "de:09162:220": {
+    "id": "de:09162:220",
+    "name": "Prinzregentenplatz",
+    "lat": 48.1389,
+    "lng": 11.6042
+  },
+  "de:09162:230": {
+    "id": "de:09162:230",
+    "name": "Arabellapark",
+    "lat": 48.1471,
+    "lng": 11.6292
+  },
+  "de:09162:300": {
+    "id": "de:09162:300",
+    "name": "Theresienwiese",
+    "lat": 48.1319,
+    "lng": 11.5494
+  },
+  "de:09162:310": {
+    "id": "de:09162:310",
+    "name": "Schwanthalerhöhe",
+    "lat": 48.1328,
+    "lng": 11.5393
+  },
+  "de:09162:320": {
+    "id": "de:09162:320",
+    "name": "Heimeranplatz",
+    "lat": 48.1323,
+    "lng": 11.5313
+  },
+  "de:09162:330": {
+    "id": "de:09162:330",
+    "name": "Laimer Platz",
+    "lat": 48.1378,
+    "lng": 11.5043
+  },
+  "de:09162:400": {
+    "id": "de:09162:400",
+    "name": "Neuperlach Zentrum",
+    "lat": 48.0980,
+    "lng": 11.6307
+  },
+  "de:09162:410": {
+    "id": "de:09162:410",
+    "name": "Neuperlach Süd",
+    "lat": 48.0883,
+    "lng": 11.6289
+  },
+  "de:09162:420": {
+    "id": "de:09162:420",
+    "name": "Quiddestraße",
+    "lat": 48.1093,
+    "lng": 11.6147
+  },
+  "de:09162:430": {
+    "id": "de:09162:430",
+    "name": "Mangfallplatz",
+    "lat": 48.1175,
+    "lng": 11.6073
+  },
+  "de:09162:500": {
+    "id": "de:09162:500",
+    "name": "Feldmoching",
+    "lat": 48.2179,
+    "lng": 11.5283
+  },
+  "de:09162:510": {
+    "id": "de:09162:510",
+    "name": "Hasenbergl",
+    "lat": 48.2056,
+    "lng": 11.5389
+  },
+  "de:09162:520": {
+    "id": "de:09162:520",
+    "name": "Dülferstraße",
+    "lat": 48.1957,
+    "lng": 11.5451
+  },
+  "de:09162:600": {
+    "id": "de:09162:600",
+    "name": "Messestadt Ost",
+    "lat": 48.1370,
+    "lng": 11.6945
+  },
+  "de:09162:610": {
+    "id": "de:09162:610",
+    "name": "Messestadt West",
+    "lat": 48.1350,
+    "lng": 11.6785
+  }
+}

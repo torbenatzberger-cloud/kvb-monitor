@@ -1,0 +1,364 @@
+{
+  "U3": {
+    "segments": [
+      {
+        "from_stop": "de:09162:170",
+        "to_stop": "de:09162:180",
+        "travel_time_seconds": 120,
+        "distance_meters": 900
+      },
+      {
+        "from_stop": "de:09162:180",
+        "to_stop": "de:09162:140",
+        "travel_time_seconds": 90,
+        "distance_meters": 750
+      },
+      {
+        "from_stop": "de:09162:140",
+        "to_stop": "de:09162:130",
+        "travel_time_seconds": 60,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "de:09162:130",
+        "to_stop": "de:09162:100",
+        "travel_time_seconds": 90,
+        "distance_meters": 700
+      },
+      {
+        "from_stop": "de:09162:100",
+        "to_stop": "de:09162:110",
+        "travel_time_seconds": 60,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "de:09162:110",
+        "to_stop": "de:09162:120",
+        "travel_time_seconds": 60,
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "de:09162:120",
+        "to_stop": "de:09162:70",
+        "travel_time_seconds": 90,
+        "distance_meters": 650
+      },
+      {
+        "from_stop": "de:09162:70",
+        "to_stop": "de:09162:6",
+        "travel_time_seconds": 90,
+        "distance_meters": 700
+      },
+      {
+        "from_stop": "de:09162:6",
+        "to_stop": "de:09162:2",
+        "travel_time_seconds": 60,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "de:09162:2",
+        "to_stop": "de:09162:10",
+        "travel_time_seconds": 60,
+        "distance_meters": 500
+      }
+    ]
+  },
+  "U6": {
+    "segments": [
+      {
+        "from_stop": "de:09162:500",
+        "to_stop": "de:09162:510",
+        "travel_time_seconds": 180,
+        "distance_meters": 1600
+      },
+      {
+        "from_stop": "de:09162:510",
+        "to_stop": "de:09162:520",
+        "travel_time_seconds": 120,
+        "distance_meters": 1300
+      },
+      {
+        "from_stop": "de:09162:520",
+        "to_stop": "de:09162:150",
+        "travel_time_seconds": 180,
+        "distance_meters": 2000
+      },
+      {
+        "from_stop": "de:09162:150",
+        "to_stop": "de:09162:140",
+        "travel_time_seconds": 120,
+        "distance_meters": 1400
+      },
+      {
+        "from_stop": "de:09162:140",
+        "to_stop": "de:09162:130",
+        "travel_time_seconds": 60,
+        "distance_meters": 800
+      },
+      {
+        "from_stop": "de:09162:130",
+        "to_stop": "de:09162:120",
+        "travel_time_seconds": 90,
+        "distance_meters": 1400
+      },
+      {
+        "from_stop": "de:09162:120",
+        "to_stop": "de:09162:70",
+        "travel_time_seconds": 90,
+        "distance_meters": 900
+      },
+      {
+        "from_stop": "de:09162:70",
+        "to_stop": "de:09162:2",
+        "travel_time_seconds": 60,
+        "distance_meters": 700
+      },
+      {
+        "from_stop": "de:09162:2",
+        "to_stop": "de:09162:10",
+        "travel_time_seconds": 60,
+        "distance_meters": 600
+      }
+    ]
+  },
+  "U2": {
+    "segments": [
+      {
+        "from_stop": "de:09162:500",
+        "to_stop": "de:09162:510",
+        "travel_time_seconds": 120,
+        "distance_meters": 1600
+      },
+      {
+        "from_stop": "de:09162:510",
+        "to_stop": "de:09162:520",
+        "travel_time_seconds": 90,
+        "distance_meters": 1300
+      },
+      {
+        "from_stop": "de:09162:520",
+        "to_stop": "de:09162:150",
+        "travel_time_seconds": 150,
+        "distance_meters": 2000
+      },
+      {
+        "from_stop": "de:09162:150",
+        "to_stop": "de:09162:140",
+        "travel_time_seconds": 90,
+        "distance_meters": 1400
+      },
+      {
+        "from_stop": "de:09162:140",
+        "to_stop": "de:09162:130",
+        "travel_time_seconds": 60,
+        "distance_meters": 800
+      },
+      {
+        "from_stop": "de:09162:130",
+        "to_stop": "de:09162:120",
+        "travel_time_seconds": 90,
+        "distance_meters": 1400
+      },
+      {
+        "from_stop": "de:09162:120",
+        "to_stop": "de:09162:70",
+        "travel_time_seconds": 60,
+        "distance_meters": 900
+      },
+      {
+        "from_stop": "de:09162:70",
+        "to_stop": "de:09162:2",
+        "travel_time_seconds": 60,
+        "distance_meters": 700
+      },
+      {
+        "from_stop": "de:09162:2",
+        "to_stop": "de:09162:200",
+        "travel_time_seconds": 90,
+        "distance_meters": 1400
+      },
+      {
+        "from_stop": "de:09162:200",
+        "to_stop": "de:09162:600",
+        "travel_time_seconds": 300,
+        "distance_meters": 5700
+      }
+    ]
+  },
+  "16": {
+    "segments": [
+      {
+        "from_stop": "de:09162:90",
+        "to_stop": "de:09162:6",
+        "travel_time_seconds": 90,
+        "distance_meters": 800
+      },
+      {
+        "from_stop": "de:09162:6",
+        "to_stop": "de:09162:2",
+        "travel_time_seconds": 60,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "de:09162:2",
+        "to_stop": "de:09162:10",
+        "travel_time_seconds": 60,
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "de:09162:10",
+        "to_stop": "de:09162:210",
+        "travel_time_seconds": 120,
+        "distance_meters": 1400
+      }
+    ]
+  },
+  "19": {
+    "segments": [
+      {
+        "from_stop": "de:09162:90",
+        "to_stop": "de:09162:6",
+        "travel_time_seconds": 90,
+        "distance_meters": 800
+      },
+      {
+        "from_stop": "de:09162:6",
+        "to_stop": "de:09162:2",
+        "travel_time_seconds": 60,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "de:09162:2",
+        "to_stop": "de:09162:10",
+        "travel_time_seconds": 60,
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "de:09162:10",
+        "to_stop": "de:09162:210",
+        "travel_time_seconds": 90,
+        "distance_meters": 1200
+      },
+      {
+        "from_stop": "de:09162:210",
+        "to_stop": "de:09162:200",
+        "travel_time_seconds": 90,
+        "distance_meters": 900
+      }
+    ]
+  },
+  "U1": {
+    "segments": [
+      {
+        "from_stop": "de:09162:160",
+        "to_stop": "de:09162:150",
+        "travel_time_seconds": 120,
+        "distance_meters": 1400
+      },
+      {
+        "from_stop": "de:09162:150",
+        "to_stop": "de:09162:140",
+        "travel_time_seconds": 90,
+        "distance_meters": 1200
+      },
+      {
+        "from_stop": "de:09162:140",
+        "to_stop": "de:09162:90",
+        "travel_time_seconds": 150,
+        "distance_meters": 2800
+      },
+      {
+        "from_stop": "de:09162:90",
+        "to_stop": "de:09162:10",
+        "travel_time_seconds": 90,
+        "distance_meters": 900
+      },
+      {
+        "from_stop": "de:09162:10",
+        "to_stop": "de:09162:430",
+        "travel_time_seconds": 240,
+        "distance_meters": 4800
+      }
+    ]
+  },
+  "U4": {
+    "segments": [
+      {
+        "from_stop": "de:09162:230",
+        "to_stop": "de:09162:220",
+        "travel_time_seconds": 120,
+        "distance_meters": 1800
+      },
+      {
+        "from_stop": "de:09162:220",
+        "to_stop": "de:09162:210",
+        "travel_time_seconds": 90,
+        "distance_meters": 950
+      },
+      {
+        "from_stop": "de:09162:210",
+        "to_stop": "de:09162:2",
+        "travel_time_seconds": 120,
+        "distance_meters": 1800
+      },
+      {
+        "from_stop": "de:09162:2",
+        "to_stop": "de:09162:6",
+        "travel_time_seconds": 60,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "de:09162:6",
+        "to_stop": "de:09162:300",
+        "travel_time_seconds": 90,
+        "distance_meters": 1100
+      }
+    ]
+  },
+  "U5": {
+    "segments": [
+      {
+        "from_stop": "de:09162:330",
+        "to_stop": "de:09162:320",
+        "travel_time_seconds": 120,
+        "distance_meters": 1800
+      },
+      {
+        "from_stop": "de:09162:320",
+        "to_stop": "de:09162:310",
+        "travel_time_seconds": 60,
+        "distance_meters": 650
+      },
+      {
+        "from_stop": "de:09162:310",
+        "to_stop": "de:09162:300",
+        "travel_time_seconds": 60,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "de:09162:300",
+        "to_stop": "de:09162:6",
+        "travel_time_seconds": 90,
+        "distance_meters": 1100
+      },
+      {
+        "from_stop": "de:09162:6",
+        "to_stop": "de:09162:2",
+        "travel_time_seconds": 60,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "de:09162:2",
+        "to_stop": "de:09162:200",
+        "travel_time_seconds": 120,
+        "distance_meters": 1800
+      },
+      {
+        "from_stop": "de:09162:200",
+        "to_stop": "de:09162:410",
+        "travel_time_seconds": 420,
+        "distance_meters": 7500
+      }
+    ]
+  }
+}

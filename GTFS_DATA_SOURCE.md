@@ -30,11 +30,20 @@ Die offiziellen GTFS-Download-URLs von VRS sind nicht mehr direkt verfügbar ode
 
 ## Aktueller Status
 
-Die App verwendet derzeit **realistische Mock-Daten** mit:
-- 25 echten Stationen (mit korrekten Koordinaten)
-- Alle 11 KVB-Linien
-- Realistische Shapes für wichtige Linien
-- Realistische Fahrzeiten
+Die App verwendet derzeit **realistische Mock-Daten**:
+
+### Köln (KVB)
+- 25 echte Stationen (mit korrekten Koordinaten)
+- Alle 11 KVB-Linien (1, 3, 4, 5, 7, 9, 12, 13, 15, 16, 17, 18)
+- Realistische Shapes für Linien 5, 7, 9
+- Realistische Fahrzeiten (60-180 Sekunden zwischen Stationen)
+
+### München (MVG)
+- 30 echte Stationen (mit korrekten Koordinaten)
+- 8 U-Bahn-Linien (U1-U8)
+- 7 Tram-Linien (16, 17, 19, 20, 21, 27, 28)
+- Realistische Shapes für U2, U3, U6, Tram 16, 19
+- Realistische Fahrzeiten (60-420 Sekunden zwischen Stationen)
 
 Diese Daten sind **voll funktional** für Testing und Demo-Zwecke.
 

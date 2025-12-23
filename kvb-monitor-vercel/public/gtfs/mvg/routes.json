@@ -1,0 +1,107 @@
+{
+  "U1": {
+    "id": "U1",
+    "name": "U1",
+    "longName": "Olympia-Einkaufszentrum - Mangfallplatz",
+    "type": "subway",
+    "color": "#0d5c2c"
+  },
+  "U2": {
+    "id": "U2",
+    "name": "U2",
+    "longName": "Feldmoching - Messestadt Ost",
+    "type": "subway",
+    "color": "#c60c30"
+  },
+  "U3": {
+    "id": "U3",
+    "name": "U3",
+    "longName": "Moosach - Fürstenried West",
+    "type": "subway",
+    "color": "#f39200"
+  },
+  "U4": {
+    "id": "U4",
+    "name": "U4",
+    "longName": "Arabellapark - Theresienwiese",
+    "type": "subway",
+    "color": "#0d5c2c"
+  },
+  "U5": {
+    "id": "U5",
+    "name": "U5",
+    "longName": "Laimer Platz - Neuperlach Süd",
+    "type": "subway",
+    "color": "#a05e9e"
+  },
+  "U6": {
+    "id": "U6",
+    "name": "U6",
+    "longName": "Garching-Forschungszentrum - Klinikum Großhadern",
+    "type": "subway",
+    "color": "#0065ae"
+  },
+  "U7": {
+    "id": "U7",
+    "name": "U7",
+    "longName": "Westfriedhof - Neuperlach Zentrum",
+    "type": "subway",
+    "color": "#0d5c2c"
+  },
+  "U8": {
+    "id": "U8",
+    "name": "U8",
+    "longName": "Olympiazentrum - Neuperlach Süd",
+    "type": "subway",
+    "color": "#c60c30"
+  },
+  "16": {
+    "id": "16",
+    "name": "Tram 16",
+    "longName": "Romanplatz - St. Emmeram",
+    "type": "tram",
+    "color": "#0d5c2c"
+  },
+  "17": {
+    "id": "17",
+    "name": "Tram 17",
+    "longName": "Schwanseestraße - Amalienburgstraße",
+    "type": "tram",
+    "color": "#c60c30"
+  },
+  "19": {
+    "id": "19",
+    "name": "Tram 19",
+    "longName": "Pasing - Berg am Laim Bf",
+    "type": "tram",
+    "color": "#f39200"
+  },
+  "20": {
+    "id": "20",
+    "name": "Tram 20",
+    "longName": "Moosach Bf - Karlsplatz (Stachus)",
+    "type": "tram",
+    "color": "#0065ae"
+  },
+  "21": {
+    "id": "21",
+    "name": "Tram 21",
+    "longName": "Westfriedhof - Karlsplatz (Stachus)",
+    "type": "tram",
+    "color": "#a05e9e"
+  },
+  "27": {
+    "id": "27",
+    "name": "Tram 27",
+    "longName": "Petuelring - Karlsplatz (Stachus)",
+    "type": "tram",
+    "color": "#95c11f"
+  },
+  "28": {
+    "id": "28",
+    "name": "Tram 28",
+    "longName": "Scheidplatz - Karlsplatz (Stachus)",
+    "type": "tram",
+    "color": "#e6007e"
+  }
+}
