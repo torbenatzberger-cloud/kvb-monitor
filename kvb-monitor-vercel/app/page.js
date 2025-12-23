@@ -1103,14 +1103,26 @@ export default function Home() {
       });
       setAvailableLines(lines);
 
-      // Extract unique directions
-      const directions = extractDirections(departures, 'Köln');
+      // Extract unique directions - filtered by selected lines if any
+      const filteredDepartures = selectedLines.length > 0
+        ? departures.filter(dep => selectedLines.includes(dep.line))
+        : departures;
+
+      const directions = extractDirections(filteredDepartures, 'Köln');
       setAvailableDirections(directions);
+
+      // Clean up selected directions that are no longer available
+      if (selectedDirections.length > 0) {
+        const validDirections = selectedDirections.filter(dir => directions.includes(dir));
+        if (validDirections.length !== selectedDirections.length) {
+          setSelectedDirections(validDirections);
+        }
+      }
     } else {
       setAvailableLines([]);
       setAvailableDirections([]);
     }
-  }, [departures]);
+  }, [departures, selectedLines]);
 
   // Filter departures: Linien-Filter + Richtungs-Filter
   const departuresWithTime = departures

@@ -971,14 +971,26 @@ export default function MuenchenMonitor() {
       });
       setAvailableLines(lines);
 
-      // Extract unique directions
-      const directions = extractDirections(departures, 'München');
+      // Extract unique directions - filtered by selected lines if any
+      const filteredDepartures = selectedLines.length > 0
+        ? departures.filter(dep => selectedLines.includes(dep.line))
+        : departures;
+
+      const directions = extractDirections(filteredDepartures, 'München');
       setAvailableDirections(directions);
+
+      // Clean up selected directions that are no longer available
+      if (selectedDirections.length > 0) {
+        const validDirections = selectedDirections.filter(dir => directions.includes(dir));
+        if (validDirections.length !== selectedDirections.length) {
+          setSelectedDirections(validDirections);
+        }
+      }
     } else {
       setAvailableLines([]);
       setAvailableDirections([]);
     }
-  }, [departures]);
+  }, [departures, selectedLines]);
 
   // Process departures with time calculations + FILTER (Linien + Richtungen)
   const departuresWithTime = departures
