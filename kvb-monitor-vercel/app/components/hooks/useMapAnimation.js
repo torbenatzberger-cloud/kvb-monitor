@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { lerpPosition, smoothTransition, hasSignificantChange } from '@/app/lib/gtfs/interpolation';
+import { lerpPosition, smoothTransition, hasSignificantChange } from '../../lib/gtfs/interpolation';
 
 /**
  * Hook for 60 FPS vehicle animation

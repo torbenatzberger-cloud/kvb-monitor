@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { VehicleTracker, NetworkVehicleTracker } from '@/app/lib/gtfs/vehicleTracker';
+import { VehicleTracker, NetworkVehicleTracker } from '../../lib/gtfs/vehicleTracker';
 
 /**
  * Hook for tracking vehicle positions
