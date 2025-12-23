@@ -32,6 +32,7 @@ export default function StationAutocomplete({
 
   const wrapperRef = useRef(null);
   const debounceTimerRef = useRef(null);
+  const searchCacheRef = useRef(new Map()); // Cache for search results
 
   // Load recent searches on mount
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function StationAutocomplete({
     };
   }, []);
 
-  // Debounced API call
+  // Debounced API call with caching
   useEffect(() => {
     // Clear previous timer
     if (debounceTimerRef.current) {
@@ -78,16 +79,35 @@ export default function StationAutocomplete({
       return;
     }
 
+    // Check cache first for instant response
+    const cacheKey = query.toLowerCase().trim();
+    if (searchCacheRef.current.has(cacheKey)) {
+      const cachedResults = searchCacheRef.current.get(cacheKey);
+      setSuggestions(cachedResults);
+      setShowDropdown(true);
+      setLoading(false);
+      return;
+    }
+
     // Set loading state
     setLoading(true);
 
-    // Debounce API call (300ms)
+    // Debounce API call (150ms - reduced from 300ms for faster response)
     debounceTimerRef.current = setTimeout(async () => {
       try {
         const response = await fetch(`${apiEndpoint}?q=${encodeURIComponent(query)}`);
         const data = await response.json();
 
         if (data.success && data.stations) {
+          // Cache the results
+          searchCacheRef.current.set(cacheKey, data.stations);
+
+          // Limit cache size to 50 entries to prevent memory issues
+          if (searchCacheRef.current.size > 50) {
+            const firstKey = searchCacheRef.current.keys().next().value;
+            searchCacheRef.current.delete(firstKey);
+          }
+
           setSuggestions(data.stations);
           setShowDropdown(true);
         } else {
@@ -101,7 +121,7 @@ export default function StationAutocomplete({
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 150);
 
     return () => {
       if (debounceTimerRef.current) {
