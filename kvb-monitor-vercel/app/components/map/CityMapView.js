@@ -167,32 +167,63 @@ export default function CityMapView({
       const route = gtfsData.routes?.[vehicle.line];
       if (!route) return;
 
-      // Create custom div icon for vehicle
+      // Calculate rotation based on bearing/direction
+      const rotation = vehicle.bearing || 0;
+
+      // Create custom div icon for vehicle with tram/train symbol
       const iconHtml = `
         <div style="
-          background: ${route.color};
-          color: white;
-          border-radius: 50%;
-          width: 24px;
-          height: 24px;
+          position: relative;
+          width: 32px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: bold;
-          font-size: 12px;
-          border: 2px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          cursor: pointer;
+          transform: rotate(${rotation}deg);
         ">
-          ${vehicle.line}
+          <div style="
+            background: ${route.color};
+            color: white;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 3px solid white;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+            cursor: pointer;
+            position: relative;
+          ">
+            <span style="transform: rotate(${-rotation}deg); display: inline-block;">🚊</span>
+          </div>
+          <div style="
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%) rotate(${-rotation}deg);
+            background: ${route.color};
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            border: 1px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            white-space: nowrap;
+          ">
+            ${vehicle.line}
+          </div>
         </div>
       `;
 
       const icon = leaflet.divIcon({
         html: iconHtml,
         className: 'vehicle-marker',
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
       });
 
       const marker = leaflet.marker([vehicle.lat, vehicle.lng], { icon });

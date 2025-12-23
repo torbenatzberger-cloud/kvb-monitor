@@ -26,12 +26,20 @@ export class VehicleTracker {
   calculatePosition(departure, currentTime) {
     const { line, direction, realtimeHour, realtimeMinute, delay = 0 } = departure;
 
+    // Debug logging
+    console.log(`🚂 Calculating position for Line ${line} → ${direction} (${realtimeHour}:${realtimeMinute})`);
+
     // Find matching route shape
     const shapeId = this.findShapeId(line, direction);
     if (!shapeId) {
-      console.warn(`No shape found for line ${line} direction ${direction}`);
+      console.warn(`⚠️ No shape found for line ${line} direction "${direction}"`, {
+        availableShapes: Object.keys(this.shapes),
+        availableDirections: Object.values(this.shapes).map(s => `${s.routeId} → ${s.direction}`)
+      });
       return null;
     }
+
+    console.log(`✓ Found shape: ${shapeId}`);
 
     const shape = this.shapes[shapeId];
     if (!shape) {
@@ -44,8 +52,11 @@ export class VehicleTracker {
 
     if (!segment) {
       // Vehicle hasn't departed yet or already completed route
+      console.log(`⏸️ Line ${line}: No active segment (not departed yet or route completed)`);
       return null;
     }
+
+    console.log(`✓ Vehicle in segment: ${segment.from.name} → ${segment.to.name}`);
 
     // Calculate progress along segment (0-1)
     const progress = this.calculateProgress(segment, currentTime);
@@ -56,9 +67,16 @@ export class VehicleTracker {
     // Calculate estimated speed
     const speed = this.calculateSpeed(segment);
 
+    // Calculate bearing (direction of travel)
+    let bearing = 0;
+    if (position.prevPoint && position.nextPoint) {
+      bearing = this.calculateBearing(position.prevPoint, position.nextPoint);
+    }
+
     return {
       lat: position.lat,
       lng: position.lng,
+      bearing: bearing,
       progress: progress,
       segment: {
         from: segment.from.id,
@@ -76,11 +94,36 @@ export class VehicleTracker {
    * Find shape ID for a line and direction
    */
   findShapeId(line, direction) {
+    if (!direction) return null;
+
+    const dirLower = direction.toLowerCase();
+    const dirWords = dirLower.split(/\s+/);
+    const dirFirstWord = dirWords[0] || '';
+
     // Find shape that matches this line and direction
     const matchingShapes = Object.keys(this.shapes).filter(shapeId => {
       const shape = this.shapes[shapeId];
-      return shape.routeId === line &&
-             shape.direction.toLowerCase().includes(direction.toLowerCase().substring(0, 5));
+      if (shape.routeId !== line) return false;
+
+      const shapeDir = shape.direction.toLowerCase();
+
+      // Try multiple matching strategies:
+      // 1. Exact match
+      if (shapeDir === dirLower) return true;
+
+      // 2. Shape direction contains the departure direction
+      if (shapeDir.includes(dirLower)) return true;
+
+      // 3. Departure direction contains shape direction
+      if (dirLower.includes(shapeDir)) return true;
+
+      // 4. First word match (e.g., "Heumarkt" matches "Heumarkt Bf")
+      if (shapeDir.includes(dirFirstWord) || dirFirstWord.includes(shapeDir.split(' ')[0])) return true;
+
+      // 5. First 5 characters match (backward compatibility)
+      if (shapeDir.substring(0, 5) === dirLower.substring(0, 5)) return true;
+
+      return false;
     });
 
     return matchingShapes[0] || null;
@@ -171,7 +214,9 @@ export class VehicleTracker {
       // Fallback: linear interpolation between stops
       return {
         lat: from.lat + (to.lat - from.lat) * progress,
-        lng: from.lng + (to.lng - from.lng) * progress
+        lng: from.lng + (to.lng - from.lng) * progress,
+        prevPoint: from,
+        nextPoint: to
       };
     }
 
@@ -183,7 +228,9 @@ export class VehicleTracker {
       // Fallback
       return {
         lat: from.lat + (to.lat - from.lat) * progress,
-        lng: from.lng + (to.lng - from.lng) * progress
+        lng: from.lng + (to.lng - from.lng) * progress,
+        prevPoint: from,
+        nextPoint: to
       };
     }
 
@@ -196,7 +243,9 @@ export class VehicleTracker {
     if (segmentPoints.length < 2) {
       return {
         lat: from.lat + (to.lat - from.lat) * progress,
-        lng: from.lng + (to.lng - from.lng) * progress
+        lng: from.lng + (to.lng - from.lng) * progress,
+        prevPoint: from,
+        nextPoint: to
       };
     }
 
@@ -214,13 +263,22 @@ export class VehicleTracker {
 
         return {
           lat: p1.lat + (p2.lat - p1.lat) * localProgress,
-          lng: p1.lng + (p2.lng - p1.lng) * localProgress
+          lng: p1.lng + (p2.lng - p1.lng) * localProgress,
+          // Return previous and next points for bearing calculation
+          prevPoint: p1,
+          nextPoint: p2
         };
       }
     }
 
     // Fallback: return last point
-    return segmentPoints[segmentPoints.length - 1];
+    const lastPoint = segmentPoints[segmentPoints.length - 1];
+    return {
+      lat: lastPoint.lat,
+      lng: lastPoint.lng,
+      prevPoint: segmentPoints[segmentPoints.length - 2] || lastPoint,
+      nextPoint: lastPoint
+    };
   }
 
   /**
@@ -258,6 +316,27 @@ export class VehicleTracker {
     const distanceKm = segment.distance_meters / 1000;
     const timeHours = segment.travelTime / 3600;
     return distanceKm / timeHours;
+  }
+
+  /**
+   * Calculate bearing (compass direction) between two points
+   * @param {Object} from - {lat, lng}
+   * @param {Object} to - {lat, lng}
+   * @returns {number} Bearing in degrees (0-360), where 0° is North
+   */
+  calculateBearing(from, to) {
+    const φ1 = from.lat * Math.PI / 180;
+    const φ2 = to.lat * Math.PI / 180;
+    const Δλ = (to.lng - from.lng) * Math.PI / 180;
+
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) -
+      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+
+    const θ = Math.atan2(y, x);
+    const bearing = (θ * 180 / Math.PI + 360) % 360;
+
+    return bearing;
   }
 }
 

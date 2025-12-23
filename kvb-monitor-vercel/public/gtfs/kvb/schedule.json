@@ -1,4 +1,94 @@
 {
+  "1": {
+    "segments": [
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000018",
+        "travel_time_seconds": 90,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "22000018",
+        "to_stop": "22000120",
+        "travel_time_seconds": 60,
+        "distance_meters": 350
+      },
+      {
+        "from_stop": "22000120",
+        "to_stop": "22000100",
+        "travel_time_seconds": 120,
+        "distance_meters": 800
+      }
+    ]
+  },
+  "3": {
+    "segments": [
+      {
+        "from_stop": "22000100",
+        "to_stop": "22000238",
+        "travel_time_seconds": 90,
+        "distance_meters": 600
+      },
+      {
+        "from_stop": "22000238",
+        "to_stop": "22000023",
+        "travel_time_seconds": 120,
+        "distance_meters": 850
+      },
+      {
+        "from_stop": "22000023",
+        "to_stop": "22000025",
+        "travel_time_seconds": 60,
+        "distance_meters": 400
+      },
+      {
+        "from_stop": "22000025",
+        "to_stop": "22000019",
+        "travel_time_seconds": 90,
+        "distance_meters": 600
+      },
+      {
+        "from_stop": "22000019",
+        "to_stop": "22000012",
+        "travel_time_seconds": 120,
+        "distance_meters": 700
+      },
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000018",
+        "travel_time_seconds": 90,
+        "distance_meters": 450
+      }
+    ]
+  },
+  "4": {
+    "segments": [
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000018",
+        "travel_time_seconds": 90,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "22000018",
+        "to_stop": "22000120",
+        "travel_time_seconds": 75,
+        "distance_meters": 400
+      },
+      {
+        "from_stop": "22000120",
+        "to_stop": "22000100",
+        "travel_time_seconds": 105,
+        "distance_meters": 750
+      },
+      {
+        "from_stop": "22000100",
+        "to_stop": "22000080",
+        "travel_time_seconds": 120,
+        "distance_meters": 850
+      }
+    ]
+  },
   "5": {
     "segments": [
       {
@@ -9,9 +99,15 @@
       },
       {
         "from_stop": "22000012",
-        "to_stop": "22000030",
+        "to_stop": "22000018",
         "travel_time_seconds": 90,
         "distance_meters": 500
+      },
+      {
+        "from_stop": "22000018",
+        "to_stop": "22000030",
+        "travel_time_seconds": 75,
+        "distance_meters": 400
       },
       {
         "from_stop": "22000030",
@@ -43,15 +139,27 @@
       },
       {
         "from_stop": "22000012",
-        "to_stop": "22000238",
+        "to_stop": "22000025",
+        "travel_time_seconds": 150,
+        "distance_meters": 950
+      },
+      {
+        "from_stop": "22000025",
+        "to_stop": "22000023",
         "travel_time_seconds": 120,
         "distance_meters": 600
       },
       {
-        "from_stop": "22000238",
-        "to_stop": "22000100",
-        "travel_time_seconds": 150,
-        "distance_meters": 800
+        "from_stop": "22000023",
+        "to_stop": "22000190",
+        "travel_time_seconds": 90,
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "22000190",
+        "to_stop": "22000200",
+        "travel_time_seconds": 75,
+        "distance_meters": 450
       }
     ]
   },
@@ -65,6 +173,12 @@
       },
       {
         "from_stop": "22000030",
+        "to_stop": "22000018",
+        "travel_time_seconds": 75,
+        "distance_meters": 350
+      },
+      {
+        "from_stop": "22000018",
         "to_stop": "22000012",
         "travel_time_seconds": 90,
         "distance_meters": 500
@@ -83,35 +197,201 @@
       }
     ]
   },
-  "1": {
+  "12": {
     "segments": [
       {
         "from_stop": "22000012",
-        "to_stop": "22000120",
+        "to_stop": "22000018",
         "travel_time_seconds": 90,
-        "distance_meters": 450
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "22000018",
+        "to_stop": "22000120",
+        "travel_time_seconds": 75,
+        "distance_meters": 400
       },
       {
         "from_stop": "22000120",
         "to_stop": "22000100",
-        "travel_time_seconds": 120,
-        "distance_meters": 600
+        "travel_time_seconds": 105,
+        "distance_meters": 700
+      },
+      {
+        "from_stop": "22000100",
+        "to_stop": "22000060",
+        "travel_time_seconds": 90,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "22000060",
+        "to_stop": "22000070",
+        "travel_time_seconds": 75,
+        "distance_meters": 450
       }
     ]
   },
-  "3": {
+  "13": {
     "segments": [
       {
-        "from_stop": "22000019",
-        "to_stop": "22000012",
+        "from_stop": "22000100",
+        "to_stop": "22000060",
+        "travel_time_seconds": 90,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "22000060",
+        "to_stop": "22000070",
+        "travel_time_seconds": 75,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "22000070",
+        "to_stop": "22000238",
         "travel_time_seconds": 120,
-        "distance_meters": 700
+        "distance_meters": 800
+      },
+      {
+        "from_stop": "22000238",
+        "to_stop": "22000012",
+        "travel_time_seconds": 90,
+        "distance_meters": 500
       },
       {
         "from_stop": "22000012",
         "to_stop": "22000018",
         "travel_time_seconds": 90,
         "distance_meters": 450
+      }
+    ]
+  },
+  "15": {
+    "segments": [
+      {
+        "from_stop": "22000100",
+        "to_stop": "22000080",
+        "travel_time_seconds": 90,
+        "distance_meters": 600
+      },
+      {
+        "from_stop": "22000080",
+        "to_stop": "22000090",
+        "travel_time_seconds": 75,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "22000090",
+        "to_stop": "22000110",
+        "travel_time_seconds": 90,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "22000110",
+        "to_stop": "22000023",
+        "travel_time_seconds": 120,
+        "distance_meters": 800
+      },
+      {
+        "from_stop": "22000023",
+        "to_stop": "22000025",
+        "travel_time_seconds": 60,
+        "distance_meters": 400
+      }
+    ]
+  },
+  "16": {
+    "segments": [
+      {
+        "from_stop": "22000100",
+        "to_stop": "22000120",
+        "travel_time_seconds": 105,
+        "distance_meters": 750
+      },
+      {
+        "from_stop": "22000120",
+        "to_stop": "22000018",
+        "travel_time_seconds": 75,
+        "distance_meters": 400
+      },
+      {
+        "from_stop": "22000018",
+        "to_stop": "22000012",
+        "travel_time_seconds": 90,
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000238",
+        "travel_time_seconds": 90,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "22000238",
+        "to_stop": "22000070",
+        "travel_time_seconds": 120,
+        "distance_meters": 800
+      }
+    ]
+  },
+  "17": {
+    "segments": [
+      {
+        "from_stop": "22000100",
+        "to_stop": "22000120",
+        "travel_time_seconds": 105,
+        "distance_meters": 750
+      },
+      {
+        "from_stop": "22000120",
+        "to_stop": "22000238",
+        "travel_time_seconds": 120,
+        "distance_meters": 850
+      },
+      {
+        "from_stop": "22000238",
+        "to_stop": "22000012",
+        "travel_time_seconds": 90,
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000023",
+        "travel_time_seconds": 150,
+        "distance_meters": 1000
+      },
+      {
+        "from_stop": "22000023",
+        "to_stop": "22000080",
+        "travel_time_seconds": 120,
+        "distance_meters": 850
+      }
+    ]
+  },
+  "18": {
+    "segments": [
+      {
+        "from_stop": "22000100",
+        "to_stop": "22000238",
+        "travel_time_seconds": 90,
+        "distance_meters": 600
+      },
+      {
+        "from_stop": "22000238",
+        "to_stop": "22000023",
+        "travel_time_seconds": 120,
+        "distance_meters": 850
+      },
+      {
+        "from_stop": "22000023",
+        "to_stop": "22000180",
+        "travel_time_seconds": 150,
+        "distance_meters": 1100
+      },
+      {
+        "from_stop": "22000180",
+        "to_stop": "22000200",
+        "travel_time_seconds": 90,
+        "distance_meters": 600
       }
     ]
   }
