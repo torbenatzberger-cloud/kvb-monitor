@@ -1047,8 +1047,8 @@ export default function MuenchenMonitor() {
     setDisplayCount(prev => prev + 10);
   };
 
-  // Get main direction for leave timer
-  const mainDirection = findMainDirections(departuresWithTime, walkTimeSeconds, selectedDirections)[0] || null;
+  // Get main directions for leave timer
+  const mainDirections = findMainDirections(departuresWithTime, walkTimeSeconds, selectedDirections);
 
   return (
     <div style={{
@@ -1181,21 +1181,27 @@ export default function MuenchenMonitor() {
         </div>
       )}
 
-      {/* Leave Timer - Single */}
-      {mainDirection && (
+      {/* Leave Timer */}
+      {mainDirections.length > 0 && (
         <div style={styles.leaveTimerContainer}>
-          <div style={styles.leaveTimerSingle}>
-            <LeaveTimerCard 
-              direction={mainDirection} 
-              walkTimeSeconds={walkTimeSeconds}
-              mounted={mounted}
-            />
+          <div style={{
+            ...styles.leaveTimerGrid,
+            gridTemplateColumns: mainDirections.length === 1 ? '1fr' : '1fr 1fr',
+          }}>
+            {mainDirections.map((direction, index) => (
+              <LeaveTimerCard
+                key={direction.name}
+                direction={direction}
+                walkTimeSeconds={walkTimeSeconds}
+                mounted={mounted}
+              />
+            ))}
           </div>
         </div>
       )}
 
       {/* Hinweis wenn keine erreichbaren Bahnen */}
-      {!loading && departuresWithTime.length > 0 && !mainDirection && (
+      {!loading && departuresWithTime.length > 0 && mainDirections.length === 0 && (
         <div style={styles.leaveTimerContainer}>
           <div style={{ textAlign: 'center', padding: '20px', opacity: 0.7 }}>
             <p style={{ fontSize: '14px' }}>⏰ Keine Bahn mehr erreichbar mit {walkTime} min Gehzeit</p>

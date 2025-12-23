@@ -1317,11 +1317,14 @@ export default function Home() {
       {/* Leave Timer */}
       {mainDirections.length > 0 && (
         <div style={styles.leaveTimerContainer}>
-          <div style={styles.leaveTimerGrid}>
+          <div style={{
+            ...styles.leaveTimerGrid,
+            gridTemplateColumns: mainDirections.length === 1 ? '1fr' : '1fr 1fr',
+          }}>
             {mainDirections.map(dir => (
-              <LeaveTimerCard 
-                key={dir.name} 
-                direction={dir} 
+              <LeaveTimerCard
+                key={dir.name}
+                direction={dir}
                 walkTimeSeconds={walkTimeSeconds}
               />
             ))}
