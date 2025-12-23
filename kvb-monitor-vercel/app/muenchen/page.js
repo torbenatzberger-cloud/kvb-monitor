@@ -1,12 +1,28 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import StationAutocomplete from '../components/StationAutocomplete';
+import DirectionFilter from '../components/DirectionFilter';
+import LineFilter from '../components/LineFilter';
+import { extractDirections, normalizeDirection } from '../lib/stationUtils';
+import { saveSettings as saveSettingsUtil, loadSettings as loadSettingsUtil, addRecentSearch } from '../lib/storageUtils';
 
 // === CONFIG ===
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.8.0';
 
 // === CHANGELOG ===
 const CHANGELOG = [
+  {
+    version: '1.8.0',
+    date: '23.12.2025',
+    changes: [
+      'NEU: Haltestellen-Suche mit Autocomplete – finde jede beliebige Station in München',
+      'NEU: Linienfilter – wähle gezielt eine oder mehrere Linien',
+      'NEU: Richtungsfilter – wähle gezielt eine oder mehrere Richtungen',
+      'NEU: Recent Searches – schneller Zugriff auf häufig genutzte Haltestellen',
+      'Verbessert: Settings werden persistent gespeichert (inkl. Haltestelle)',
+    ],
+  },
   {
     version: '1.1.0',
     date: '19.12.2025',
@@ -70,13 +86,8 @@ const LINE_COLORS = {
   '22': '#96c11e', '23': '#96c11e', '25': '#96c11e', '27': '#96c11e', '28': '#96c11e',
 };
 
-// Feste Haltestelle (für Philipp)
-const STATION = { name: 'Theodolindenplatz', id: 'de:09162:1122' };
-
-// === FILTER CONFIG ===
-// Nur Linie 25 Richtung Max-Weber-Platz anzeigen
-const FILTER_LINE = '25';
-const FILTER_DIRECTION = 'Max-Weber-Platz';
+// All available MVG lines (dynamically extracted from departures)
+const ALL_LINE_TYPES = ['U', 'S', 'Tram', 'Bus'];
 
 // === HELPERS ===
 function getLineColor(line) {
@@ -141,21 +152,22 @@ function findMainDirections(departures, walkTimeSeconds) {
   return directions.slice(0, 2);
 }
 
-// === localStorage Helpers ===
+// === localStorage Helpers (legacy - now using utility functions) ===
 function loadSettings() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const saved = localStorage.getItem('mvg-monitor-settings');
-    if (saved) return JSON.parse(saved);
-  } catch (e) {}
-  return null;
+  return loadSettingsUtil('mvg-monitor-settings-v3', {
+    version: 3,
+    walkTime: 7,
+    selectedStation: null,
+    selectedLines: [],
+    selectedDirections: [],
+  });
 }
 
 function saveSettings(settings) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem('mvg-monitor-settings', JSON.stringify(settings));
-  } catch (e) {}
+  saveSettingsUtil('mvg-monitor-settings-v3', {
+    ...settings,
+    version: 3,
+  });
 }
 
 // === STYLES ===
@@ -868,6 +880,12 @@ export default function MuenchenMonitor() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [walkTime, setWalkTime] = useState(7);
+  const [selectedStation, setSelectedStation] = useState(null); // Changed: null instead of STATION
+  const [selectedLines, setSelectedLines] = useState([]); // NEW: Line filter
+  const [selectedDirections, setSelectedDirections] = useState([]); // NEW: Direction filter
+  const [availableLines, setAvailableLines] = useState([]); // NEW: Available lines from departures
+  const [availableDirections, setAvailableDirections] = useState([]); // NEW: Available directions from departures
+  const [showSettings, setShowSettings] = useState(false); // NEW: Settings panel toggle
   const [showChangelog, setShowChangelog] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -878,12 +896,40 @@ export default function MuenchenMonitor() {
 
   const walkTimeSeconds = walkTime * 60;
 
-  // Load settings from localStorage on mount
+  // Load settings from localStorage on mount (with v2 → v3 migration)
   useEffect(() => {
     const saved = loadSettings();
-    if (saved) {
-      if (saved.walkTime) setWalkTime(saved.walkTime);
+
+    // Migration from v2 to v3
+    if (!saved.version || saved.version < 3) {
+      const v2Settings = loadSettingsUtil('mvg-monitor-settings');
+      if (v2Settings && Object.keys(v2Settings).length > 0) {
+        // Migrate v2 settings
+        if (v2Settings.walkTime) setWalkTime(v2Settings.walkTime);
+        // v2 didn't have selectedStation, selectedLines, selectedDirections
+        setSelectedStation(null);
+        setSelectedLines([]);
+        setSelectedDirections([]);
+
+        // Save migrated settings to v3
+        saveSettings({
+          walkTime: v2Settings.walkTime || 7,
+          selectedStation: null,
+          selectedLines: [],
+          selectedDirections: [],
+        });
+        setSettingsLoaded(true);
+        setMounted(true);
+        return;
+      }
     }
+
+    // Load v3 settings
+    if (saved.walkTime) setWalkTime(saved.walkTime);
+    if (saved.selectedStation) setSelectedStation(saved.selectedStation);
+    if (saved.selectedLines) setSelectedLines(saved.selectedLines);
+    if (saved.selectedDirections) setSelectedDirections(saved.selectedDirections);
+
     setSettingsLoaded(true);
     setMounted(true); // Client is now hydrated
   }, []);
@@ -893,8 +939,11 @@ export default function MuenchenMonitor() {
     if (!settingsLoaded) return;
     saveSettings({
       walkTime,
+      selectedStation,
+      selectedLines,
+      selectedDirections,
     });
-  }, [walkTime, settingsLoaded]);
+  }, [walkTime, selectedStation, selectedLines, selectedDirections, settingsLoaded]);
 
   // Update every second
   useEffect(() => {
@@ -904,13 +953,37 @@ export default function MuenchenMonitor() {
     return () => clearInterval(timer);
   }, []);
 
-  // Process departures with time calculations + FILTER
+  // Extract available lines and directions from departures
+  useEffect(() => {
+    if (departures.length > 0) {
+      // Extract unique lines
+      const lines = [...new Set(departures.map(d => d.line))].sort((a, b) => {
+        // Sort: U-Bahn, S-Bahn, Tram, Bus
+        const aType = a.startsWith('U') ? 0 : a.startsWith('S') ? 1 : /^\d+$/.test(a) ? 2 : 3;
+        const bType = b.startsWith('U') ? 0 : b.startsWith('S') ? 1 : /^\d+$/.test(b) ? 2 : 3;
+        if (aType !== bType) return aType - bType;
+        return a.localeCompare(b, undefined, { numeric: true });
+      });
+      setAvailableLines(lines);
+
+      // Extract unique directions
+      const directions = extractDirections(departures, 'München');
+      setAvailableDirections(directions);
+    } else {
+      setAvailableLines([]);
+      setAvailableDirections([]);
+    }
+  }, [departures]);
+
+  // Process departures with time calculations + FILTER (Linien + Richtungen)
   const departuresWithTime = departures
-    // Filter: Nur Linie 25 Richtung Max-Weber-Platz
+    // NEU: Linienfilter (wenn aktiv)
+    .filter(dep => selectedLines.length === 0 || selectedLines.includes(dep.line))
+    // NEU: Richtungsfilter (wenn aktiv)
     .filter(dep => {
-      const lineMatch = dep.line === FILTER_LINE;
-      const directionMatch = dep.direction.includes(FILTER_DIRECTION);
-      return lineMatch && directionMatch;
+      if (selectedDirections.length === 0) return true; // Alle Richtungen
+      const normalized = normalizeDirection(dep.direction, 'München');
+      return selectedDirections.some(selected => normalized.includes(selected));
     })
     .map(dep => ({
       ...dep,
@@ -923,13 +996,19 @@ export default function MuenchenMonitor() {
 
   // Fetch departures
   const fetchDepartures = useCallback(async (showRefreshIndicator = false) => {
+    if (!selectedStation) {
+      setLoading(false);
+      setDepartures([]);
+      return;
+    }
+
     if (showRefreshIndicator) setRefreshing(true);
-    
+
     try {
-      const url = `/api/muenchen/departures/${STATION.id}`;
+      const url = `/api/muenchen/departures/${selectedStation.id}`;
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (data.success !== false && data.departures) {
         setDepartures(data.departures);
         setLastUpdate(new Date());
@@ -943,7 +1022,7 @@ export default function MuenchenMonitor() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [selectedStation]);
 
   const handleManualRefresh = () => {
     fetchDepartures(true);
@@ -978,15 +1057,20 @@ export default function MuenchenMonitor() {
         <div style={styles.headerLeft}>
           <div style={styles.logo}>MVG</div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '16px' }}>{STATION.name}</div>
+            <div style={{ fontWeight: 700, fontSize: '16px' }}>
+              {selectedStation ? selectedStation.name : 'MVG Monitor'}
+            </div>
             <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '2px' }}>
               {mounted ? currentTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
             </div>
           </div>
         </div>
         <div style={styles.headerButtons}>
-          <button style={styles.refreshBtn} onClick={handleManualRefresh}>
-            <span style={{ 
+          <button style={styles.settingsBtn} onClick={() => setShowSettings(!showSettings)}>
+            ⚙️
+          </button>
+          <button style={styles.refreshBtn} onClick={handleManualRefresh} disabled={!selectedStation}>
+            <span style={{
               display: 'inline-block',
               transition: 'transform 0.3s',
               transform: refreshing ? 'rotate(360deg)' : 'none',
@@ -995,41 +1079,103 @@ export default function MuenchenMonitor() {
         </div>
       </header>
 
-      {/* Filter Info Banner */}
-      <div style={{
-        background: 'rgba(150, 193, 30, 0.15)',
-        borderBottom: '1px solid rgba(150, 193, 30, 0.3)',
-        padding: '8px 16px',
-        fontSize: '12px',
-        textAlign: 'center',
-      }}>
-        <span style={{
-          background: getLineColor(FILTER_LINE),
-          padding: '2px 8px',
-          borderRadius: '4px',
-          fontWeight: 600,
-          marginRight: '8px',
-        }}>
-          {FILTER_LINE}
-        </span>
-        Richtung {FILTER_DIRECTION}
-      </div>
+      {/* Settings Panel */}
+      {showSettings && (
+        <div style={styles.settingsPanel}>
+          {/* Gehzeit */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
+              🚶 Gehzeit zur Haltestelle
+            </div>
+            <WalkTimeStepper value={walkTime} onChange={setWalkTime} accentColor="#0065ae" />
+          </div>
 
-      {/* Gehzeit Einstellung - immer sichtbar */}
-      <div style={{
-        padding: '12px 16px',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        background: 'rgba(0,0,0,0.2)',
-      }}>
-        <div style={{ fontSize: '11px', opacity: 0.5, marginBottom: '8px', textAlign: 'center' }}>
-          🚶 Gehzeit zur Haltestelle
+          {/* Haltestelle - NEU: Autocomplete */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
+              🚏 Haltestelle
+            </div>
+            <StationAutocomplete
+              apiEndpoint="/api/muenchen/stations/search"
+              placeholder="Haltestelle suchen..."
+              onSelect={(station) => {
+                setSelectedStation(station);
+                addRecentSearch('mvg-recent-searches', station);
+                setDisplayCount(10);
+              }}
+              initialValue={selectedStation}
+              accentColor="#0065ae"
+              recentSearchesKey="mvg-recent-searches"
+            />
+          </div>
+
+          {/* Linienfilter - NEU */}
+          {availableLines.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
+                🚋 Linienfilter
+              </div>
+              <LineFilter
+                availableLines={availableLines}
+                selectedLines={selectedLines}
+                onChange={setSelectedLines}
+                getLineColor={getLineColor}
+              />
+            </div>
+          )}
+
+          {/* Richtungsfilter - NEU */}
+          {availableDirections.length > 0 && (
+            <div>
+              <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
+                🎯 Richtungen
+              </div>
+              <DirectionFilter
+                availableDirections={availableDirections}
+                selectedDirections={selectedDirections}
+                onChange={setSelectedDirections}
+                departures={departuresWithTime}
+                accentColor="#0065ae"
+              />
+            </div>
+          )}
         </div>
-        <WalkTimeStepper 
-          value={walkTime} 
-          onChange={setWalkTime}
-          accentColor="#0065ae"
-        />
-      </div>
+      )}
+
+      {/* Active Filter Info */}
+      {(selectedLines.length > 0 || selectedDirections.length > 0) && (
+        <div style={{
+          background: 'rgba(150, 193, 30, 0.1)',
+          borderBottom: '1px solid rgba(150, 193, 30, 0.3)',
+          padding: '8px 16px',
+          fontSize: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          flexWrap: 'wrap',
+        }}>
+          {selectedLines.length > 0 && (
+            <>
+              <span>Linie{selectedLines.length > 1 ? 'n' : ''}:</span>
+              {selectedLines.map(line => (
+                <span key={line} style={{
+                  background: getLineColor(line),
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontWeight: 600,
+                }}>
+                  {line}
+                </span>
+              ))}
+            </>
+          )}
+          {selectedLines.length > 0 && selectedDirections.length > 0 && <span>•</span>}
+          {selectedDirections.length > 0 && (
+            <span>Richtung{selectedDirections.length > 1 ? 'en' : ''}: {selectedDirections.join(', ')}</span>
+          )}
+        </div>
+      )}
 
       {/* Leave Timer - Single */}
       {mainDirection && (
@@ -1056,7 +1202,17 @@ export default function MuenchenMonitor() {
 
       {/* Main Content */}
       <main style={styles.main}>
-        {loading ? (
+        {!selectedStation ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚏</div>
+            <p style={{ fontSize: '16px', marginBottom: '12px', fontWeight: 600 }}>
+              Wähle eine Haltestelle
+            </p>
+            <p style={{ fontSize: '13px', opacity: 0.7, maxWidth: '300px', margin: '0 auto' }}>
+              Öffne die Einstellungen (⚙️) und suche nach deiner Haltestelle
+            </p>
+          </div>
+        ) : loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <div style={{
               width: '40px',
@@ -1088,7 +1244,12 @@ export default function MuenchenMonitor() {
           </div>
         ) : departuresWithTime.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', opacity: 0.7 }}>
-            <p style={{ fontSize: '14px' }}>Keine Abfahrten für Linie {FILTER_LINE} Richtung {FILTER_DIRECTION}</p>
+            <p style={{ fontSize: '14px' }}>Keine Abfahrten gefunden</p>
+            {(selectedLines.length > 0 || selectedDirections.length > 0) && (
+              <p style={{ fontSize: '12px', marginTop: '8px' }}>
+                Versuche den Filter anzupassen
+              </p>
+            )}
           </div>
         ) : (
           <>
