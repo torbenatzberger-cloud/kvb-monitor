@@ -12,7 +12,7 @@ const CHANGELOG = [
     date: '19.12.2025',
     changes: [
       'Gehzeit per +/- einstellbar (1-30 min)',
-      'NEU: München-Version unter /muenchen verfügbar',
+      'München-Version unter /muenchen verfügbar',
     ],
   },
   {
