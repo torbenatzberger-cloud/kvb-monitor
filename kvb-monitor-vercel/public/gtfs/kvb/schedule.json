@@ -1,0 +1,118 @@
+{
+  "5": {
+    "segments": [
+      {
+        "from_stop": "22000238",
+        "to_stop": "22000012",
+        "travel_time_seconds": 180,
+        "distance_meters": 950
+      },
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000030",
+        "travel_time_seconds": 90,
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "22000030",
+        "to_stop": "22000019",
+        "travel_time_seconds": 120,
+        "distance_meters": 600
+      },
+      {
+        "from_stop": "22000019",
+        "to_stop": "22000025",
+        "travel_time_seconds": 90,
+        "distance_meters": 550
+      },
+      {
+        "from_stop": "22000025",
+        "to_stop": "22000023",
+        "travel_time_seconds": 120,
+        "distance_meters": 600
+      }
+    ]
+  },
+  "7": {
+    "segments": [
+      {
+        "from_stop": "22000018",
+        "to_stop": "22000012",
+        "travel_time_seconds": 90,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000238",
+        "travel_time_seconds": 120,
+        "distance_meters": 600
+      },
+      {
+        "from_stop": "22000238",
+        "to_stop": "22000100",
+        "travel_time_seconds": 150,
+        "distance_meters": 800
+      }
+    ]
+  },
+  "9": {
+    "segments": [
+      {
+        "from_stop": "22000019",
+        "to_stop": "22000030",
+        "travel_time_seconds": 90,
+        "distance_meters": 400
+      },
+      {
+        "from_stop": "22000030",
+        "to_stop": "22000012",
+        "travel_time_seconds": 90,
+        "distance_meters": 500
+      },
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000120",
+        "travel_time_seconds": 60,
+        "distance_meters": 350
+      },
+      {
+        "from_stop": "22000120",
+        "to_stop": "22000100",
+        "travel_time_seconds": 120,
+        "distance_meters": 600
+      }
+    ]
+  },
+  "1": {
+    "segments": [
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000120",
+        "travel_time_seconds": 90,
+        "distance_meters": 450
+      },
+      {
+        "from_stop": "22000120",
+        "to_stop": "22000100",
+        "travel_time_seconds": 120,
+        "distance_meters": 600
+      }
+    ]
+  },
+  "3": {
+    "segments": [
+      {
+        "from_stop": "22000019",
+        "to_stop": "22000012",
+        "travel_time_seconds": 120,
+        "distance_meters": 700
+      },
+      {
+        "from_stop": "22000012",
+        "to_stop": "22000018",
+        "travel_time_seconds": 90,
+        "distance_meters": 450
+      }
+    ]
+  }
+}
