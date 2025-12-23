@@ -1377,8 +1377,9 @@ export default function MuenchenMonitor() {
         </div>
       )}
 
-      {/* Live Map */}
-      {selectedStation && (
+      {/* Live Map - TEMPORARILY DISABLED */}
+      {/* TODO: Re-enable after further development */}
+      {false && selectedStation && (
         <MapContainer
           selectedStation={selectedStation}
           selectedLines={selectedLines}

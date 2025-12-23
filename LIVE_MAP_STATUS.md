@@ -1,13 +1,35 @@
 # Live Map Feature - Deployment Status
 
-**Status:** ✅ **LIVE-READY & DEPLOYED**
+**Status:** 🚧 **DEVELOPMENT PAUSED - FEATURE DISABLED**
 **Last Updated:** 2025-12-24
 **Deployment URL:** https://kvb-monitor-git-develop-torbenatzberger-cloud.vercel.app
-**Mode:** Live tracking with demo fallback
+**Mode:** Feature hidden in UI, logic remains in codebase
 
 ---
 
-## 🎯 Feature Overview
+## ⚠️ Current Status
+
+**Development has been paused** and the feature is **hidden from the UI** while we refine the approach.
+
+### What's Hidden:
+- Live map button removed from Cologne page (`app/page.js`)
+- Live map button removed from Munich page (`app/muenchen/page.js`)
+- MapContainer component still renders but `{false &&` prevents display
+
+### What Remains:
+- All tracking logic in `app/lib/gtfs/` (vehicleTracker.js, interpolation.js)
+- All map components in `app/components/map/` (CityMapView, LineMapView, VehicleListView, MapContainer, MapModeToggle)
+- All hooks in `app/components/hooks/` (useGTFSData, useVehicleTracking, useMapAnimation)
+- Complete GTFS mock data in `public/gtfs/` for both cities
+
+### To Re-enable:
+Change `{false && selectedStop &&` to `{selectedStop &&` in:
+- `kvb-monitor-vercel/app/page.js` (line ~1406)
+- `kvb-monitor-vercel/app/muenchen/page.js` (line ~1382)
+
+---
+
+## 🎯 Feature Overview (When Enabled)
 
 Die Live-Karte visualisiert geschätzte Echtzeit-Positionen aller Bahnen basierend auf:
 - GTFS-Fahrplandaten (statisch)
@@ -16,8 +38,9 @@ Die Live-Karte visualisiert geschätzte Echtzeit-Positionen aller Bahnen basiere
 
 ### Verfügbare Ansichten
 
-1. **City View (Leaflet)** - Übersichtskarte mit mehreren Linien
-2. **Line View (SVG)** - Detailansicht für einzelne Linien
+1. **List View** - Einfache Tabelle mit Fahrzeugdetails (Standard)
+2. **City View (Leaflet)** - Übersichtskarte mit mehreren Linien
+3. **Line View (SVG)** - Detailansicht für einzelne Linien
 
 ---
 

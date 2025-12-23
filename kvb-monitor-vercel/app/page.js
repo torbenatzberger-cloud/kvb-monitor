@@ -1401,8 +1401,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Live Map */}
-      {selectedStop && (
+      {/* Live Map - TEMPORARILY DISABLED */}
+      {/* TODO: Re-enable after further development */}
+      {false && selectedStop && (
         <MapContainer
           selectedStation={selectedStop}
           selectedLines={selectedLines}
