@@ -17,10 +17,10 @@ const CHANGELOG = [
     date: '23.12.2025',
     changes: [
       'NEU: Haltestellen-Suche mit Autocomplete – finde jede beliebige Station in München',
-      'NEU: Linienfilter – wähle gezielt eine oder mehrere Linien',
-      'NEU: Richtungsfilter – wähle gezielt eine oder mehrere Richtungen',
-      'NEU: Recent Searches – schneller Zugriff auf häufig genutzte Haltestellen',
-      'Verbessert: Settings werden persistent gespeichert (inkl. Haltestelle)',
+      'NEU: Linien- und Richtungsfilter – wähle gezielt welche du sehen möchtest',
+      'NEU: Relevante Störungsmeldungen – nur für deine ausgewählten Linien & Haltestelle',
+      'Verbessert: Schnellere Suche durch Caching (150ms statt 300ms)',
+      'Verbessert: Settings werden persistent gespeichert',
     ],
   },
   {

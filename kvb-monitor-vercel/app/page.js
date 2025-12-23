@@ -18,9 +18,9 @@ const CHANGELOG = [
     changes: [
       'NEU: Haltestellen-Suche mit Autocomplete – finde jede beliebige Haltestelle',
       'NEU: Richtungsfilter – wähle gezielt eine oder mehrere Richtungen',
-      'NEU: Recent Searches – schneller Zugriff auf häufig genutzte Haltestellen',
-      'Verbessert: Settings werden persistent gespeichert (inkl. Haltestelle)',
-      'Verbessert: Alle Einstellungen bleiben nach Browser-Neustart erhalten',
+      'NEU: Relevante Störungsmeldungen – nur für deine ausgewählten Linien & Haltestelle',
+      'Verbessert: Schnellere Suche durch Caching (150ms statt 300ms)',
+      'Verbessert: Settings werden persistent gespeichert',
     ],
   },
   {
