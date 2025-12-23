@@ -153,10 +153,6 @@ const LINE_COLORS = {
   '15': '#95c11f', '16': '#009fe3', '17': '#00963f', '18': '#009fe3',
 };
 
-// KVB Stadtbahn-Linien (einstellig und zweistellig bis 18)
-const STADTBAHN_LINES = ['1', '3', '4', '5', '7', '9', '12', '13', '15', '16', '17', '18'];
-const AVAILABLE_LINES = STADTBAHN_LINES;
-
 // Station-IDs für VRR EFA API
 // Format: 22000XXX wobei XXX die KVB-Haltestellen-ID ist
 const POPULAR_STOPS = [
@@ -177,15 +173,6 @@ function getLineColor(line) {
   if (clean.startsWith('S')) return '#00843d';
   if (/^\d+$/.test(clean)) return '#009fe3';
   return '#666666';
-}
-
-// Prüft ob eine Linie eine Stadtbahn ist (1-18)
-function isStadtbahnLine(line) {
-  const clean = String(line).replace(/\s+/g, '');
-  const num = parseInt(clean);
-  // Stadtbahn: Nummern 1-18 (einstellig oder zweistellig bis 18)
-  // Bus: Dreistellig (z.B. 172, 173, 212)
-  return !isNaN(num) && num >= 1 && num <= 18 && STADTBAHN_LINES.includes(clean);
 }
 
 function calculateSecondsUntil(realtimeHour, realtimeMinute) {
@@ -257,7 +244,6 @@ function loadSettings() {
     selectedStop: null,
     selectedLines: [],
     selectedDirections: [],
-    stadtbahnOnly: true,
   });
 }
 
@@ -1037,8 +1023,8 @@ export default function Home() {
   const [selectedStop, setSelectedStop] = useState(null); // Changed: null instead of POPULAR_STOPS[0]
   const [selectedLines, setSelectedLines] = useState([]);
   const [selectedDirections, setSelectedDirections] = useState([]); // NEW: Direction filter
+  const [availableLines, setAvailableLines] = useState([]); // NEW: Available lines from departures
   const [availableDirections, setAvailableDirections] = useState([]); // NEW: Available directions from departures
-  const [stadtbahnOnly, setStadtbahnOnly] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -1065,7 +1051,6 @@ export default function Home() {
         if (v2Settings.walkTime) setWalkTime(v2Settings.walkTime);
         if (v2Settings.selectedStop) setSelectedStop(v2Settings.selectedStop);
         if (v2Settings.selectedLines) setSelectedLines(v2Settings.selectedLines);
-        if (typeof v2Settings.stadtbahnOnly === 'boolean') setStadtbahnOnly(v2Settings.stadtbahnOnly);
         // New in v3: selectedDirections defaults to empty (all directions)
         setSelectedDirections([]);
 
@@ -1075,7 +1060,6 @@ export default function Home() {
           selectedStop: v2Settings.selectedStop || null,
           selectedLines: v2Settings.selectedLines || [],
           selectedDirections: [],
-          stadtbahnOnly: v2Settings.stadtbahnOnly ?? true,
         });
         setSettingsLoaded(true);
         return;
@@ -1087,7 +1071,6 @@ export default function Home() {
     if (saved.selectedStop) setSelectedStop(saved.selectedStop);
     if (saved.selectedLines) setSelectedLines(saved.selectedLines);
     if (saved.selectedDirections) setSelectedDirections(saved.selectedDirections);
-    if (typeof saved.stadtbahnOnly === 'boolean') setStadtbahnOnly(saved.stadtbahnOnly);
 
     setSettingsLoaded(true);
   }, []);
@@ -1100,9 +1083,8 @@ export default function Home() {
       selectedStop,
       selectedLines,
       selectedDirections,
-      stadtbahnOnly,
     });
-  }, [walkTime, selectedStop, selectedLines, selectedDirections, stadtbahnOnly, settingsLoaded]);
+  }, [walkTime, selectedStop, selectedLines, selectedDirections, settingsLoaded]);
 
   // Update every second
   useEffect(() => {
@@ -1113,21 +1095,27 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Extract available directions from departures
+  // Extract available lines and directions from departures
   useEffect(() => {
     if (departures.length > 0) {
+      // Extract unique lines and sort
+      const lines = [...new Set(departures.map(d => d.line))].sort((a, b) => {
+        return a.localeCompare(b, undefined, { numeric: true });
+      });
+      setAvailableLines(lines);
+
+      // Extract unique directions
       const directions = extractDirections(departures, 'Köln');
       setAvailableDirections(directions);
     } else {
+      setAvailableLines([]);
       setAvailableDirections([]);
     }
   }, [departures]);
 
-  // Filter departures: Stadtbahn-Filter + Linien-Filter + Richtungs-Filter
+  // Filter departures: Linien-Filter + Richtungs-Filter
   const departuresWithTime = departures
-    // Erst Stadtbahn-Filter (wenn aktiv)
-    .filter(dep => !stadtbahnOnly || isStadtbahnLine(dep.line))
-    // Dann Linien-Filter (wenn aktiv)
+    // Linien-Filter (wenn aktiv)
     .filter(dep => selectedLines.length === 0 || selectedLines.includes(dep.line))
     // NEU: Richtungs-Filter (wenn aktiv)
     .filter(dep => {
@@ -1213,11 +1201,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [fetchDisruptions]);
 
-  // Select all lines (for filter reset button)
-  const selectAllLines = () => {
-    setSelectedLines([]);
-  };
-
   // Mehr anzeigen
   const showMore = () => {
     setDisplayCount(prev => prev + 10);
@@ -1272,17 +1255,9 @@ export default function Home() {
       {/* Settings Panel */}
       {showSettings && (
         <div style={styles.settingsPanel}>
-          {/* Gehzeit */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
-              🚶 Gehzeit zur Haltestelle
-            </div>
-            <WalkTimeStepper value={walkTime} onChange={setWalkTime} accentColor="#e30613" />
-          </div>
-
-          {/* Haltestelle - NEU: Autocomplete statt Buttons */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
+          {/* 1. Haltestelle */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
               🚏 Haltestelle
             </div>
             <StationAutocomplete
@@ -1299,61 +1274,43 @@ export default function Home() {
             />
           </div>
 
-          {/* Nur Stadtbahn Toggle */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
-              🚋 Verkehrsmittel
+          {/* 2. Linienfilter - nur wenn Haltestelle gewählt */}
+          {selectedStop && availableLines.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
+                🚋 Linien
+              </div>
+              <LineFilter
+                availableLines={availableLines}
+                selectedLines={selectedLines}
+                onChange={setSelectedLines}
+                getLineColor={getLineColor}
+              />
             </div>
-            <button
-              onClick={() => setStadtbahnOnly(!stadtbahnOnly)}
-              style={{
-                padding: '10px 16px',
-                border: '2px solid',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 600,
-                marginRight: '8px',
-                background: stadtbahnOnly ? 'rgba(0,150,63,0.2)' : 'rgba(255,255,255,0.1)',
-                borderColor: stadtbahnOnly ? '#00963f' : 'rgba(255,255,255,0.2)',
-                color: '#fff',
-              }}
-            >
-              {stadtbahnOnly ? '✓ Nur Stadtbahn' : 'Alle (inkl. Bus)'}
-            </button>
-            <span style={{ fontSize: '11px', opacity: 0.5 }}>
-              {stadtbahnOnly ? 'Nur Linien 1-18' : 'Zeigt auch Buslinien'}
-            </span>
-          </div>
+          )}
 
-          {/* Linienfilter - NEU: Component statt inline */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
-              🚦 Linienfilter
-            </div>
-            <LineFilter
-              availableLines={AVAILABLE_LINES}
-              selectedLines={selectedLines}
-              onChange={setSelectedLines}
-              getLineColor={getLineColor}
-            />
-          </div>
-
-          {/* Richtungsfilter - KOMPLETT NEU */}
-          {availableDirections.length > 0 && (
-            <div>
-              <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
+          {/* 3. Richtungsfilter - nur wenn Linien verfügbar */}
+          {selectedStop && availableDirections.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
                 🎯 Richtungen
               </div>
               <DirectionFilter
                 availableDirections={availableDirections}
                 selectedDirections={selectedDirections}
                 onChange={setSelectedDirections}
-                departures={departuresWithTime}
                 accentColor="#e30613"
               />
             </div>
           )}
+
+          {/* 4. Gehzeit */}
+          <div style={{ paddingTop: selectedStop ? '12px' : '0', borderTop: selectedStop ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
+              🚶 Gehzeit zur Haltestelle
+            </div>
+            <WalkTimeStepper value={walkTime} onChange={setWalkTime} accentColor="#e30613" />
+          </div>
         </div>
       )}
 
@@ -1383,10 +1340,10 @@ export default function Home() {
       )}
 
       {/* Active Filter Info */}
-      {(selectedLines.length > 0 || stadtbahnOnly) && (
+      {(selectedLines.length > 0 || selectedDirections.length > 0) && (
         <div style={{
-          background: 'rgba(0,150,63,0.1)',
-          borderBottom: '1px solid rgba(0,150,63,0.3)',
+          background: 'rgba(227, 6, 19, 0.1)',
+          borderBottom: '1px solid rgba(227, 6, 19, 0.3)',
           padding: '8px 16px',
           fontSize: '12px',
           display: 'flex',
@@ -1395,15 +1352,6 @@ export default function Home() {
           gap: '8px',
           flexWrap: 'wrap',
         }}>
-          {stadtbahnOnly && (
-            <span style={{
-              background: 'rgba(0,150,63,0.3)',
-              padding: '2px 8px',
-              borderRadius: '4px',
-            }}>
-              🚋 Nur Stadtbahn
-            </span>
-          )}
           {selectedLines.length > 0 && (
             <>
               <span>Linie{selectedLines.length > 1 ? 'n' : ''}:</span>
@@ -1419,10 +1367,14 @@ export default function Home() {
               ))}
             </>
           )}
+          {selectedLines.length > 0 && selectedDirections.length > 0 && <span>•</span>}
+          {selectedDirections.length > 0 && (
+            <span>Richtung{selectedDirections.length > 1 ? 'en' : ''}: {selectedDirections.join(', ')}</span>
+          )}
           <button
             onClick={() => {
-              selectAllLines();
-              setStadtbahnOnly(false);
+              setSelectedLines([]);
+              setSelectedDirections([]);
             }}
             style={{
               background: 'none',

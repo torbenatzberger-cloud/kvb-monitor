@@ -1087,17 +1087,9 @@ export default function MuenchenMonitor() {
       {/* Settings Panel */}
       {showSettings && (
         <div style={styles.settingsPanel}>
-          {/* Gehzeit */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
-              🚶 Gehzeit zur Haltestelle
-            </div>
-            <WalkTimeStepper value={walkTime} onChange={setWalkTime} accentColor="#0065ae" />
-          </div>
-
-          {/* Haltestelle - NEU: Autocomplete */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
+          {/* 1. Haltestelle */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
               🚏 Haltestelle
             </div>
             <StationAutocomplete
@@ -1114,11 +1106,11 @@ export default function MuenchenMonitor() {
             />
           </div>
 
-          {/* Linienfilter - NEU */}
-          {availableLines.length > 0 && (
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
-                🚋 Linienfilter
+          {/* 2. Linienfilter - nur wenn Haltestelle gewählt */}
+          {selectedStation && availableLines.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
+                🚋 Linien
               </div>
               <LineFilter
                 availableLines={availableLines}
@@ -1129,21 +1121,28 @@ export default function MuenchenMonitor() {
             </div>
           )}
 
-          {/* Richtungsfilter - NEU */}
-          {availableDirections.length > 0 && (
-            <div>
-              <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '8px' }}>
+          {/* 3. Richtungsfilter - nur wenn Linien verfügbar */}
+          {selectedStation && availableDirections.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
                 🎯 Richtungen
               </div>
               <DirectionFilter
                 availableDirections={availableDirections}
                 selectedDirections={selectedDirections}
                 onChange={setSelectedDirections}
-                departures={departuresWithTime}
                 accentColor="#0065ae"
               />
             </div>
           )}
+
+          {/* 4. Gehzeit */}
+          <div style={{ paddingTop: selectedStation ? '12px' : '0', borderTop: selectedStation ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
+              🚶 Gehzeit zur Haltestelle
+            </div>
+            <WalkTimeStepper value={walkTime} onChange={setWalkTime} accentColor="#0065ae" />
+          </div>
         </div>
       )}
 

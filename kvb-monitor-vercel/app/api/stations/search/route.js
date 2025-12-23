@@ -58,6 +58,11 @@ export async function GET(request) {
 
       stations = points
         .filter(point => point.type === 'stop')
+        .filter(point => {
+          // Nur Köln-Ergebnisse
+          const place = point.ref?.place || '';
+          return place.toLowerCase() === 'köln';
+        })
         .map(point => ({
           id: point.ref?.id || point.stateless || String(Math.random()),
           name: point.name || 'Unbekannt',
