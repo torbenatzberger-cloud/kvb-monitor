@@ -1,12 +1,28 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import StationAutocomplete from '../components/StationAutocomplete';
+import DirectionFilter from '../components/DirectionFilter';
+import LineFilter from '../components/LineFilter';
+import { extractDirections, normalizeDirection } from '../lib/stationUtils';
+import { saveSettings as saveSettingsUtil, loadSettings as loadSettingsUtil, addRecentSearch } from '../lib/storageUtils';
 
 // === CONFIG ===
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.8.0';
 
 // === CHANGELOG ===
 const CHANGELOG = [
+  {
+    version: '1.8.0',
+    date: '23.12.2025',
+    changes: [
+      'NEU: Haltestellen-Suche mit Autocomplete – finde jede beliebige Station in München',
+      'NEU: Linien- und Richtungsfilter – wähle gezielt welche du sehen möchtest',
+      'NEU: Relevante Störungsmeldungen – nur für deine ausgewählten Linien & Haltestelle',
+      'Verbessert: Schnellere Suche durch Caching (150ms statt 300ms)',
+      'Verbessert: Settings werden persistent gespeichert',
+    ],
+  },
   {
     version: '1.1.0',
     date: '19.12.2025',
@@ -70,13 +86,8 @@ const LINE_COLORS = {
   '22': '#96c11e', '23': '#96c11e', '25': '#96c11e', '27': '#96c11e', '28': '#96c11e',
 };
 
-// Feste Haltestelle (für Philipp)
-const STATION = { name: 'Theodolindenplatz', id: 'de:09162:1122' };
-
-// === FILTER CONFIG ===
-// Nur Linie 25 Richtung Max-Weber-Platz anzeigen
-const FILTER_LINE = '25';
-const FILTER_DIRECTION = 'Max-Weber-Platz';
+// All available MVG lines (dynamically extracted from departures)
+const ALL_LINE_TYPES = ['U', 'S', 'Tram', 'Bus'];
 
 // === HELPERS ===
 function getLineColor(line) {
@@ -114,13 +125,13 @@ function getShortDirection(direction) {
   return short;
 }
 
-function findMainDirections(departures, walkTimeSeconds) {
+function findMainDirections(departures, walkTimeSeconds, selectedDirections = []) {
   if (departures.length === 0) return [];
-  
+
   const reachable = departures.filter(dep => dep.secondsUntil >= walkTimeSeconds);
-  
+
   if (reachable.length === 0) return [];
-  
+
   const directionMap = {};
   reachable.forEach(dep => {
     const dir = getShortDirection(dep.direction);
@@ -129,7 +140,7 @@ function findMainDirections(departures, walkTimeSeconds) {
     }
     directionMap[dir].push(dep);
   });
-  
+
   const directions = Object.entries(directionMap)
     .map(([name, deps]) => ({
       name,
@@ -137,25 +148,31 @@ function findMainDirections(departures, walkTimeSeconds) {
       count: deps.length
     }))
     .sort((a, b) => a.nextDeparture.secondsUntil - b.nextDeparture.secondsUntil);
-  
-  return directions.slice(0, 2);
+
+  // Timer Logic:
+  // - Default: Show 2 timers
+  // - If exactly 1 direction selected: Show 1 timer
+  // - If 2+ directions selected: Show 2 timers
+  const maxDirections = selectedDirections.length === 1 ? 1 : 2;
+  return directions.slice(0, maxDirections);
 }
 
-// === localStorage Helpers ===
+// === localStorage Helpers (legacy - now using utility functions) ===
 function loadSettings() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const saved = localStorage.getItem('mvg-monitor-settings');
-    if (saved) return JSON.parse(saved);
-  } catch (e) {}
-  return null;
+  return loadSettingsUtil('mvg-monitor-settings-v3', {
+    version: 3,
+    walkTime: 7,
+    selectedStation: null,
+    selectedLines: [],
+    selectedDirections: [],
+  });
 }
 
 function saveSettings(settings) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem('mvg-monitor-settings', JSON.stringify(settings));
-  } catch (e) {}
+  saveSettingsUtil('mvg-monitor-settings-v3', {
+    ...settings,
+    version: 3,
+  });
 }
 
 // === STYLES ===
@@ -861,6 +878,126 @@ function FeedbackModal({ isOpen, onClose }) {
   );
 }
 
+// === RELEVANT DISRUPTIONS ===
+/**
+ * Relevante Störungsmeldungen für München - nur Linien & Haltestelle die aktuell angezeigt werden
+ * Wird unterhalb der Leave Timer Cards angezeigt
+ */
+function RelevantDisruptions({ disruptions, selectedStation, displayedLines, getLineColor }) {
+  const [expanded, setExpanded] = useState(true);
+
+  if (!disruptions || !selectedStation) return null;
+
+  // Combine all transit disruptions (U-Bahn, Tram, S-Bahn)
+  const allTransitDisruptions = [
+    ...(disruptions.ubahn || []),
+    ...(disruptions.tram || []),
+    ...(disruptions.sbahn || []),
+  ];
+
+  // Filter: Nur Linienstörungen für aktuell angezeigte Linien
+  const relevantDisruptions = allTransitDisruptions.filter(d =>
+    displayedLines.includes(d.line)
+  );
+
+  // Filter: Nur Aufzüge für die aktuell ausgewählte Haltestelle
+  const stationName = selectedStation.name.toLowerCase();
+  const relevantElevator = (disruptions.elevator || []).filter(e =>
+    e.station?.toLowerCase().includes(stationName) || stationName.includes(e.station?.toLowerCase() || '')
+  );
+
+  const totalRelevant = relevantDisruptions.length + relevantElevator.length;
+
+  if (totalRelevant === 0) return null;
+
+  return (
+    <div style={{
+      margin: '16px',
+      borderRadius: '12px',
+      background: 'rgba(255, 152, 0, 0.1)',
+      border: '1px solid rgba(255, 152, 0, 0.3)',
+      overflow: 'hidden',
+    }}>
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '12px 16px',
+          cursor: 'pointer',
+          gap: '10px',
+        }}
+      >
+        <span style={{ fontSize: '18px' }}>⚠️</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>
+            Aktuelle Störungen
+          </div>
+          <div style={{ fontSize: '12px', opacity: 0.7 }}>
+            {relevantDisruptions.length > 0 && `${relevantDisruptions.length} Linie${relevantDisruptions.length > 1 ? 'n' : ''}`}
+            {relevantDisruptions.length > 0 && relevantElevator.length > 0 && ' • '}
+            {relevantElevator.length > 0 && `${relevantElevator.length} Aufzug${relevantElevator.length > 1 ? 'e' : ''}`}
+          </div>
+        </div>
+        <span style={{ fontSize: '12px', opacity: 0.5 }}>{expanded ? '▼' : '▶'}</span>
+      </div>
+
+      {expanded && (
+        <div style={{ padding: '0 16px 16px' }}>
+          {/* Linienstörungen */}
+          {relevantDisruptions.map((d, i) => (
+            <div key={`transit-${i}`} style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              padding: '10px 12px',
+              marginBottom: i < relevantDisruptions.length - 1 ? '8px' : 0,
+              background: 'rgba(255, 152, 0, 0.15)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 152, 0, 0.25)',
+            }}>
+              <span style={{
+                minWidth: '36px',
+                height: '28px',
+                borderRadius: '6px',
+                background: getLineColor(d.line),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#fff',
+                flexShrink: 0,
+              }}>{d.line}</span>
+              <span style={{ fontSize: '13px', lineHeight: 1.5, flex: 1 }}>{d.message}</span>
+            </div>
+          ))}
+
+          {/* Aufzugstörungen an dieser Haltestelle */}
+          {relevantElevator.length > 0 && (
+            <div style={{
+              marginTop: relevantDisruptions.length > 0 ? '12px' : 0,
+              padding: '10px 12px',
+              background: 'rgba(255, 152, 0, 0.1)',
+              borderRadius: '8px',
+            }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🛗</span>
+                <span>Aufzug außer Betrieb</span>
+              </div>
+              {relevantElevator.map((e, i) => (
+                <div key={`elev-${i}`} style={{ fontSize: '12px', opacity: 0.9, padding: '4px 0 4px 24px' }}>
+                  {e.station}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // === MAIN COMPONENT ===
 export default function MuenchenMonitor() {
   const [departures, setDepartures] = useState([]);
@@ -868,6 +1005,12 @@ export default function MuenchenMonitor() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [walkTime, setWalkTime] = useState(7);
+  const [selectedStation, setSelectedStation] = useState(null); // Changed: null instead of STATION
+  const [selectedLines, setSelectedLines] = useState([]); // NEW: Line filter
+  const [selectedDirections, setSelectedDirections] = useState([]); // NEW: Direction filter
+  const [availableLines, setAvailableLines] = useState([]); // NEW: Available lines from departures
+  const [availableDirections, setAvailableDirections] = useState([]); // NEW: Available directions from departures
+  const [showSettings, setShowSettings] = useState(false); // NEW: Settings panel toggle
   const [showChangelog, setShowChangelog] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -875,15 +1018,44 @@ export default function MuenchenMonitor() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [displayCount, setDisplayCount] = useState(10);
   const [mounted, setMounted] = useState(false);
+  const [disruptions, setDisruptions] = useState(null);
 
   const walkTimeSeconds = walkTime * 60;
 
-  // Load settings from localStorage on mount
+  // Load settings from localStorage on mount (with v2 → v3 migration)
   useEffect(() => {
     const saved = loadSettings();
-    if (saved) {
-      if (saved.walkTime) setWalkTime(saved.walkTime);
+
+    // Migration from v2 to v3
+    if (!saved.version || saved.version < 3) {
+      const v2Settings = loadSettingsUtil('mvg-monitor-settings');
+      if (v2Settings && Object.keys(v2Settings).length > 0) {
+        // Migrate v2 settings
+        if (v2Settings.walkTime) setWalkTime(v2Settings.walkTime);
+        // v2 didn't have selectedStation, selectedLines, selectedDirections
+        setSelectedStation(null);
+        setSelectedLines([]);
+        setSelectedDirections([]);
+
+        // Save migrated settings to v3
+        saveSettings({
+          walkTime: v2Settings.walkTime || 7,
+          selectedStation: null,
+          selectedLines: [],
+          selectedDirections: [],
+        });
+        setSettingsLoaded(true);
+        setMounted(true);
+        return;
+      }
     }
+
+    // Load v3 settings
+    if (saved.walkTime) setWalkTime(saved.walkTime);
+    if (saved.selectedStation) setSelectedStation(saved.selectedStation);
+    if (saved.selectedLines) setSelectedLines(saved.selectedLines);
+    if (saved.selectedDirections) setSelectedDirections(saved.selectedDirections);
+
     setSettingsLoaded(true);
     setMounted(true); // Client is now hydrated
   }, []);
@@ -893,8 +1065,11 @@ export default function MuenchenMonitor() {
     if (!settingsLoaded) return;
     saveSettings({
       walkTime,
+      selectedStation,
+      selectedLines,
+      selectedDirections,
     });
-  }, [walkTime, settingsLoaded]);
+  }, [walkTime, selectedStation, selectedLines, selectedDirections, settingsLoaded]);
 
   // Update every second
   useEffect(() => {
@@ -904,13 +1079,49 @@ export default function MuenchenMonitor() {
     return () => clearInterval(timer);
   }, []);
 
-  // Process departures with time calculations + FILTER
+  // Extract available lines and directions from departures
+  useEffect(() => {
+    if (departures.length > 0) {
+      // Extract unique lines
+      const lines = [...new Set(departures.map(d => d.line))].sort((a, b) => {
+        // Sort: U-Bahn, S-Bahn, Tram, Bus
+        const aType = a.startsWith('U') ? 0 : a.startsWith('S') ? 1 : /^\d+$/.test(a) ? 2 : 3;
+        const bType = b.startsWith('U') ? 0 : b.startsWith('S') ? 1 : /^\d+$/.test(b) ? 2 : 3;
+        if (aType !== bType) return aType - bType;
+        return a.localeCompare(b, undefined, { numeric: true });
+      });
+      setAvailableLines(lines);
+
+      // Extract unique directions - filtered by selected lines if any
+      const filteredDepartures = selectedLines.length > 0
+        ? departures.filter(dep => selectedLines.includes(dep.line))
+        : departures;
+
+      const directions = extractDirections(filteredDepartures, 'München');
+      setAvailableDirections(directions);
+
+      // Clean up selected directions that are no longer available
+      if (selectedDirections.length > 0) {
+        const validDirections = selectedDirections.filter(dir => directions.includes(dir));
+        if (validDirections.length !== selectedDirections.length) {
+          setSelectedDirections(validDirections);
+        }
+      }
+    } else {
+      setAvailableLines([]);
+      setAvailableDirections([]);
+    }
+  }, [departures, selectedLines]);
+
+  // Process departures with time calculations + FILTER (Linien + Richtungen)
   const departuresWithTime = departures
-    // Filter: Nur Linie 25 Richtung Max-Weber-Platz
+    // NEU: Linienfilter (wenn aktiv)
+    .filter(dep => selectedLines.length === 0 || selectedLines.includes(dep.line))
+    // NEU: Richtungsfilter (wenn aktiv)
     .filter(dep => {
-      const lineMatch = dep.line === FILTER_LINE;
-      const directionMatch = dep.direction.includes(FILTER_DIRECTION);
-      return lineMatch && directionMatch;
+      if (selectedDirections.length === 0) return true; // Alle Richtungen
+      const normalized = normalizeDirection(dep.direction, 'München');
+      return selectedDirections.some(selected => normalized.includes(selected));
     })
     .map(dep => ({
       ...dep,
@@ -923,13 +1134,19 @@ export default function MuenchenMonitor() {
 
   // Fetch departures
   const fetchDepartures = useCallback(async (showRefreshIndicator = false) => {
+    if (!selectedStation) {
+      setLoading(false);
+      setDepartures([]);
+      return;
+    }
+
     if (showRefreshIndicator) setRefreshing(true);
-    
+
     try {
-      const url = `/api/muenchen/departures/${STATION.id}`;
+      const url = `/api/muenchen/departures/${selectedStation.id}`;
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (data.success !== false && data.departures) {
         setDepartures(data.departures);
         setLastUpdate(new Date());
@@ -943,7 +1160,7 @@ export default function MuenchenMonitor() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [selectedStation]);
 
   const handleManualRefresh = () => {
     fetchDepartures(true);
@@ -958,13 +1175,50 @@ export default function MuenchenMonitor() {
     return () => clearInterval(interval);
   }, [fetchDepartures, settingsLoaded]);
 
-  // Mehr anzeigen
-  const showMore = () => {
-    setDisplayCount(prev => prev + 10);
-  };
+  // Infinite Scroll: Mehr anzeigen wenn User scrollt
+  useEffect(() => {
+    const handleScroll = () => {
+      // Prüfe ob User am Ende der Seite ist
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const pageHeight = document.documentElement.scrollHeight;
 
-  // Get main direction for leave timer (nur 1 bei Filter)
-  const mainDirection = findMainDirections(departuresWithTime, walkTimeSeconds)[0] || null;
+      // Wenn noch 200px bis zum Ende → lade mehr
+      if (scrollPosition >= pageHeight - 200) {
+        if (displayCount < departuresWithTime.length) {
+          setDisplayCount(prev => Math.min(prev + 20, departuresWithTime.length));
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [displayCount, departuresWithTime.length]);
+
+  // Fetch disruptions
+  const fetchDisruptions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/muenchen/disruptions');
+      if (res.ok) {
+        const data = await res.json();
+        setDisruptions(data);
+      }
+    } catch (e) {
+      console.error('Disruptions fetch error:', e);
+    }
+  }, []);
+
+  // Disruptions laden und alle 5 Minuten aktualisieren
+  useEffect(() => {
+    fetchDisruptions();
+    const interval = setInterval(fetchDisruptions, 300000);
+    return () => clearInterval(interval);
+  }, [fetchDisruptions]);
+
+  // Get main directions for leave timer
+  const mainDirections = findMainDirections(departuresWithTime, walkTimeSeconds, selectedDirections);
+
+  // Get list of displayed lines for disruption filtering
+  const displayedLines = [...new Set(departuresWithTime.map(dep => dep.line))];
 
   return (
     <div style={{
@@ -978,15 +1232,20 @@ export default function MuenchenMonitor() {
         <div style={styles.headerLeft}>
           <div style={styles.logo}>MVG</div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '16px' }}>{STATION.name}</div>
+            <div style={{ fontWeight: 700, fontSize: '16px' }}>
+              {selectedStation ? selectedStation.name : 'MVG Monitor'}
+            </div>
             <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '2px' }}>
               {mounted ? currentTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
             </div>
           </div>
         </div>
         <div style={styles.headerButtons}>
-          <button style={styles.refreshBtn} onClick={handleManualRefresh}>
-            <span style={{ 
+          <button style={styles.settingsBtn} onClick={() => setShowSettings(!showSettings)}>
+            ⚙️
+          </button>
+          <button style={styles.refreshBtn} onClick={handleManualRefresh} disabled={!selectedStation}>
+            <span style={{
               display: 'inline-block',
               transition: 'transform 0.3s',
               transform: refreshing ? 'rotate(360deg)' : 'none',
@@ -995,57 +1254,124 @@ export default function MuenchenMonitor() {
         </div>
       </header>
 
-      {/* Filter Info Banner */}
-      <div style={{
-        background: 'rgba(150, 193, 30, 0.15)',
-        borderBottom: '1px solid rgba(150, 193, 30, 0.3)',
-        padding: '8px 16px',
-        fontSize: '12px',
-        textAlign: 'center',
-      }}>
-        <span style={{
-          background: getLineColor(FILTER_LINE),
-          padding: '2px 8px',
-          borderRadius: '4px',
-          fontWeight: 600,
-          marginRight: '8px',
-        }}>
-          {FILTER_LINE}
-        </span>
-        Richtung {FILTER_DIRECTION}
-      </div>
-
-      {/* Gehzeit Einstellung - immer sichtbar */}
-      <div style={{
-        padding: '12px 16px',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        background: 'rgba(0,0,0,0.2)',
-      }}>
-        <div style={{ fontSize: '11px', opacity: 0.5, marginBottom: '8px', textAlign: 'center' }}>
-          🚶 Gehzeit zur Haltestelle
-        </div>
-        <WalkTimeStepper 
-          value={walkTime} 
-          onChange={setWalkTime}
-          accentColor="#0065ae"
-        />
-      </div>
-
-      {/* Leave Timer - Single */}
-      {mainDirection && (
-        <div style={styles.leaveTimerContainer}>
-          <div style={styles.leaveTimerSingle}>
-            <LeaveTimerCard 
-              direction={mainDirection} 
-              walkTimeSeconds={walkTimeSeconds}
-              mounted={mounted}
+      {/* Settings Panel */}
+      {showSettings && (
+        <div style={styles.settingsPanel}>
+          {/* 1. Haltestelle */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
+              🚏 Haltestelle
+            </div>
+            <StationAutocomplete
+              apiEndpoint="/api/muenchen/stations/search"
+              placeholder="Haltestelle suchen..."
+              onSelect={(station) => {
+                setSelectedStation(station);
+                addRecentSearch('mvg-recent-searches', station);
+                setDisplayCount(10);
+              }}
+              initialValue={selectedStation}
+              accentColor="#0065ae"
+              recentSearchesKey="mvg-recent-searches"
             />
+          </div>
+
+          {/* 2. Linienfilter - nur wenn Haltestelle gewählt */}
+          {selectedStation && availableLines.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
+                🚋 Linien
+              </div>
+              <LineFilter
+                availableLines={availableLines}
+                selectedLines={selectedLines}
+                onChange={setSelectedLines}
+                getLineColor={getLineColor}
+              />
+            </div>
+          )}
+
+          {/* 3. Richtungsfilter - nur wenn Linien verfügbar */}
+          {selectedStation && availableDirections.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
+                🎯 Richtungen
+              </div>
+              <DirectionFilter
+                availableDirections={availableDirections}
+                selectedDirections={selectedDirections}
+                onChange={setSelectedDirections}
+                accentColor="#0065ae"
+              />
+            </div>
+          )}
+
+          {/* 4. Gehzeit */}
+          <div style={{ paddingTop: selectedStation ? '12px' : '0', borderTop: selectedStation ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', opacity: 0.9 }}>
+              🚶 Gehzeit zur Haltestelle
+            </div>
+            <WalkTimeStepper value={walkTime} onChange={setWalkTime} accentColor="#0065ae" />
+          </div>
+        </div>
+      )}
+
+      {/* Active Filter Info */}
+      {(selectedLines.length > 0 || selectedDirections.length > 0) && (
+        <div style={{
+          background: 'rgba(150, 193, 30, 0.1)',
+          borderBottom: '1px solid rgba(150, 193, 30, 0.3)',
+          padding: '8px 16px',
+          fontSize: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          flexWrap: 'wrap',
+        }}>
+          {selectedLines.length > 0 && (
+            <>
+              <span>Linie{selectedLines.length > 1 ? 'n' : ''}:</span>
+              {selectedLines.map(line => (
+                <span key={line} style={{
+                  background: getLineColor(line),
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontWeight: 600,
+                }}>
+                  {line}
+                </span>
+              ))}
+            </>
+          )}
+          {selectedLines.length > 0 && selectedDirections.length > 0 && <span>•</span>}
+          {selectedDirections.length > 0 && (
+            <span>Richtung{selectedDirections.length > 1 ? 'en' : ''}: {selectedDirections.join(', ')}</span>
+          )}
+        </div>
+      )}
+
+      {/* Leave Timer */}
+      {mainDirections.length > 0 && (
+        <div style={styles.leaveTimerContainer}>
+          <div style={{
+            ...styles.leaveTimerGrid,
+            gridTemplateColumns: mainDirections.length === 1 ? '1fr' : '1fr 1fr',
+          }}>
+            {mainDirections.map((direction, index) => (
+              <LeaveTimerCard
+                key={direction.name}
+                direction={direction}
+                walkTimeSeconds={walkTimeSeconds}
+                mounted={mounted}
+              />
+            ))}
           </div>
         </div>
       )}
 
       {/* Hinweis wenn keine erreichbaren Bahnen */}
-      {!loading && departuresWithTime.length > 0 && !mainDirection && (
+      {!loading && departuresWithTime.length > 0 && mainDirections.length === 0 && (
         <div style={styles.leaveTimerContainer}>
           <div style={{ textAlign: 'center', padding: '20px', opacity: 0.7 }}>
             <p style={{ fontSize: '14px' }}>⏰ Keine Bahn mehr erreichbar mit {walkTime} min Gehzeit</p>
@@ -1054,9 +1380,27 @@ export default function MuenchenMonitor() {
         </div>
       )}
 
+      {/* Relevant Disruptions - unterhalb der Leave Timer Cards */}
+      <RelevantDisruptions
+        disruptions={disruptions}
+        selectedStation={selectedStation}
+        displayedLines={displayedLines}
+        getLineColor={getLineColor}
+      />
+
       {/* Main Content */}
       <main style={styles.main}>
-        {loading ? (
+        {!selectedStation ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚏</div>
+            <p style={{ fontSize: '16px', marginBottom: '12px', fontWeight: 600 }}>
+              Wähle eine Haltestelle
+            </p>
+            <p style={{ fontSize: '13px', opacity: 0.7, maxWidth: '300px', margin: '0 auto' }}>
+              Öffne die Einstellungen (⚙️) und suche nach deiner Haltestelle
+            </p>
+          </div>
+        ) : loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <div style={{
               width: '40px',
@@ -1088,7 +1432,12 @@ export default function MuenchenMonitor() {
           </div>
         ) : departuresWithTime.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', opacity: 0.7 }}>
-            <p style={{ fontSize: '14px' }}>Keine Abfahrten für Linie {FILTER_LINE} Richtung {FILTER_DIRECTION}</p>
+            <p style={{ fontSize: '14px' }}>Keine Abfahrten gefunden</p>
+            {(selectedLines.length > 0 || selectedDirections.length > 0) && (
+              <p style={{ fontSize: '12px', marginTop: '8px' }}>
+                Versuche den Filter anzupassen
+              </p>
+            )}
           </div>
         ) : (
           <>
@@ -1156,27 +1505,15 @@ export default function MuenchenMonitor() {
               })}
             </div>
 
-            {/* Mehr anzeigen Button */}
+            {/* Infinite Scroll Indicator */}
             {displayCount < departuresWithTime.length && (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center',
-                marginTop: '16px',
+              <div style={{
+                textAlign: 'center',
+                padding: '16px',
+                fontSize: '12px',
+                opacity: 0.6,
               }}>
-                <button
-                  onClick={showMore}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                  }}
-                >
-                  Mehr anzeigen ({departuresWithTime.length - displayCount} weitere)
-                </button>
+                Scrolle für mehr Abfahrten ({departuresWithTime.length - displayCount} weitere)
               </div>
             )}
             
