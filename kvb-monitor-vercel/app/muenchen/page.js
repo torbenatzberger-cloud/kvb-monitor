@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import StationAutocomplete from '../components/StationAutocomplete';
 import DirectionFilter from '../components/DirectionFilter';
 import LineFilter from '../components/LineFilter';
+import MapContainer from '../components/map/MapContainer';
 import { extractDirections, normalizeDirection } from '../lib/stationUtils';
 import { saveSettings as saveSettingsUtil, loadSettings as loadSettingsUtil, addRecentSearch } from '../lib/storageUtils';
 
@@ -1368,6 +1369,16 @@ export default function MuenchenMonitor() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Live Map */}
+      {selectedStop && (
+        <MapContainer
+          selectedStation={selectedStop}
+          selectedLines={selectedLines}
+          city="munich"
+          accentColor="#0065ae"
+        />
       )}
 
       {/* Hinweis wenn keine erreichbaren Bahnen */}
