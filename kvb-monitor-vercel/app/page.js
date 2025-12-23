@@ -3,10 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // === CONFIG ===
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 
 // === CHANGELOG ===
 const CHANGELOG = [
+  {
+    version: '1.7.1',
+    date: '23.12.2025',
+    changes: [
+      'Fix: Vergangene Bahnen werden jetzt korrekt als "weg" angezeigt',
+      'Fix: Bahnen die länger als 1 Min weg sind werden ausgeblendet',
+      'Fix: 12-Stunden-Schwelle für Tag/Nacht-Berechnung',
+    ],
+  },
   {
     version: '1.7.0',
     date: '19.12.2025',
@@ -167,12 +176,15 @@ function calculateSecondsUntil(realtimeHour, realtimeMinute) {
   const now = new Date();
   const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   let departureSeconds = realtimeHour * 3600 + realtimeMinute * 60;
-  
-  if (departureSeconds < nowSeconds - 3600) {
+
+  // Nur für Zeiten die mehr als 12 Stunden in der Vergangenheit liegen → nächster Tag
+  // (vorher 1 Stunde - das war zu kurz!)
+  if (departureSeconds < nowSeconds - 12 * 3600) {
     departureSeconds += 24 * 3600;
   }
-  
-  return Math.max(0, departureSeconds - nowSeconds);
+
+  // Erlaube negative Werte für vergangene Abfahrten
+  return departureSeconds - nowSeconds;
 }
 
 function formatTime(totalSeconds) {
@@ -1068,6 +1080,8 @@ export default function Home() {
       secondsUntil: calculateSecondsUntil(dep.realtimeHour, dep.realtimeMinute),
       minutesUntil: Math.floor(calculateSecondsUntil(dep.realtimeHour, dep.realtimeMinute) / 60)
     }))
+    // Filter: Bahnen die mehr als 1 Minute vorbei sind ausblenden
+    .filter(dep => dep.secondsUntil > -60)
     .sort((a, b) => a.secondsUntil - b.secondsUntil);
 
   // Fetch departures
@@ -1508,12 +1522,12 @@ export default function Home() {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ 
-                        fontSize: '18px', 
+                      <div style={{
+                        fontSize: '18px',
                         fontWeight: 700,
                         fontVariantNumeric: 'tabular-nums',
                       }}>
-                        {dep.secondsUntil <= 30 ? 'jetzt' : `${dep.minutesUntil}'`}
+                        {dep.secondsUntil < -30 ? 'weg' : dep.secondsUntil <= 30 ? 'jetzt' : `${dep.minutesUntil}'`}
                       </div>
                     </div>
                   </div>
