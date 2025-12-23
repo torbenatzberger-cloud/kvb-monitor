@@ -146,3 +146,4 @@ Falls das Badge auf Production erscheint, prüfe die Domain-Konfiguration.
 1. Prüfe Vercel Dashboard auf Fehler
 2. Prüfe die Build-Logs
 3. Stelle sicher, dass alle Environment-Variablen gesetzt sind
+
