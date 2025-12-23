@@ -240,9 +240,11 @@ function findMainDirections(departures, walkTimeSeconds, selectedDirections = []
     }))
     .sort((a, b) => a.nextDeparture.secondsUntil - b.nextDeparture.secondsUntil);
 
-  // If directions are selected, show only those (max 2)
-  // Otherwise, show default 2 for Cologne
-  const maxDirections = selectedDirections.length > 0 ? Math.min(selectedDirections.length, 2) : 2;
+  // Timer Logic:
+  // - Default: Show 2 timers
+  // - If exactly 1 direction selected: Show 1 timer
+  // - If 2+ directions selected: Show 2 timers
+  const maxDirections = selectedDirections.length === 1 ? 1 : 2;
   return directions.slice(0, maxDirections);
 }
 

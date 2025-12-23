@@ -42,19 +42,26 @@ export async function GET(request) {
     // Transformiere Response
     let stations = [];
 
-    // VRR EFA gibt stopFinder.points.point zurück
-    // point kann ein einzelnes Objekt oder ein Array sein
-    if (data.stopFinder && data.stopFinder.points && data.stopFinder.points.point) {
-      const points = Array.isArray(data.stopFinder.points.point)
-        ? data.stopFinder.points.point
-        : [data.stopFinder.points.point];
+    // VRR EFA gibt unterschiedliche Strukturen zurück:
+    // - Mehrere Ergebnisse: stopFinder.points ist Array
+    // - Ein Ergebnis: stopFinder.points.point ist Objekt
+    if (data.stopFinder && data.stopFinder.points) {
+      let points = [];
+
+      if (Array.isArray(data.stopFinder.points)) {
+        // Mehrere Ergebnisse: points ist direkt ein Array
+        points = data.stopFinder.points;
+      } else if (data.stopFinder.points.point) {
+        // Ein Ergebnis: points.point ist ein einzelnes Objekt
+        points = [data.stopFinder.points.point];
+      }
 
       stations = points
-        .filter(point => point.anyType === 'stop')
+        .filter(point => point.type === 'stop')
         .map(point => ({
           id: point.ref?.id || point.stateless || String(Math.random()),
           name: point.name || 'Unbekannt',
-          place: point.ref?.place || point.locality || 'Köln',
+          place: point.ref?.place || 'Köln',
         }))
         .slice(0, 10); // Max. 10 Ergebnisse
     }
