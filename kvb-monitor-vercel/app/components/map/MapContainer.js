@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import CityMapView from './CityMapView';
 import LineMapView from './LineMapView';
+import VehicleListView from './VehicleListView';
 import MapModeToggle from './MapModeToggle';
 import { useGTFSData } from '../hooks/useGTFSData';
 import { useVehicleTracking } from '../hooks/useVehicleTracking';
@@ -23,7 +24,7 @@ export default function MapContainer({
   city,
   accentColor
 }) {
-  const [viewMode, setViewMode] = useState('city');
+  const [viewMode, setViewMode] = useState('list'); // Changed: Start with list view
   const [selectedLine, setSelectedLine] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -117,7 +118,14 @@ export default function MapContainer({
       />
 
       {/* Render appropriate view */}
-      {viewMode === 'city' ? (
+      {viewMode === 'list' ? (
+        <VehicleListView
+          vehicles={vehicles}
+          gtfsData={gtfsData}
+          selectedLines={selectedLines}
+          accentColor={accentColor}
+        />
+      ) : viewMode === 'city' ? (
         <CityMapView
           vehicles={vehicles}
           gtfsData={gtfsData}

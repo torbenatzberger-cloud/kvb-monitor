@@ -27,13 +27,22 @@ export default function MapModeToggle({
       {!selectedLine && (
         <div style={styles.modeButtons}>
           <button
+            onClick={() => onModeChange('list')}
+            style={{
+              ...styles.modeButton,
+              ...(mode === 'list' ? { ...styles.modeButtonActive, background: accentColor } : {})
+            }}
+          >
+            📋 Liste
+          </button>
+          <button
             onClick={() => onModeChange('city')}
             style={{
               ...styles.modeButton,
               ...(mode === 'city' ? { ...styles.modeButtonActive, background: accentColor } : {})
             }}
           >
-            🗺️ Übersicht
+            🗺️ Karte
           </button>
         </div>
       )}
