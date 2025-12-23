@@ -878,6 +878,126 @@ function FeedbackModal({ isOpen, onClose }) {
   );
 }
 
+// === RELEVANT DISRUPTIONS ===
+/**
+ * Relevante Störungsmeldungen für München - nur Linien & Haltestelle die aktuell angezeigt werden
+ * Wird unterhalb der Leave Timer Cards angezeigt
+ */
+function RelevantDisruptions({ disruptions, selectedStation, displayedLines, getLineColor }) {
+  const [expanded, setExpanded] = useState(true);
+
+  if (!disruptions || !selectedStation) return null;
+
+  // Combine all transit disruptions (U-Bahn, Tram, S-Bahn)
+  const allTransitDisruptions = [
+    ...(disruptions.ubahn || []),
+    ...(disruptions.tram || []),
+    ...(disruptions.sbahn || []),
+  ];
+
+  // Filter: Nur Linienstörungen für aktuell angezeigte Linien
+  const relevantDisruptions = allTransitDisruptions.filter(d =>
+    displayedLines.includes(d.line)
+  );
+
+  // Filter: Nur Aufzüge für die aktuell ausgewählte Haltestelle
+  const stationName = selectedStation.name.toLowerCase();
+  const relevantElevator = (disruptions.elevator || []).filter(e =>
+    e.station?.toLowerCase().includes(stationName) || stationName.includes(e.station?.toLowerCase() || '')
+  );
+
+  const totalRelevant = relevantDisruptions.length + relevantElevator.length;
+
+  if (totalRelevant === 0) return null;
+
+  return (
+    <div style={{
+      margin: '16px',
+      borderRadius: '12px',
+      background: 'rgba(255, 152, 0, 0.1)',
+      border: '1px solid rgba(255, 152, 0, 0.3)',
+      overflow: 'hidden',
+    }}>
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '12px 16px',
+          cursor: 'pointer',
+          gap: '10px',
+        }}
+      >
+        <span style={{ fontSize: '18px' }}>⚠️</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>
+            Aktuelle Störungen
+          </div>
+          <div style={{ fontSize: '12px', opacity: 0.7 }}>
+            {relevantDisruptions.length > 0 && `${relevantDisruptions.length} Linie${relevantDisruptions.length > 1 ? 'n' : ''}`}
+            {relevantDisruptions.length > 0 && relevantElevator.length > 0 && ' • '}
+            {relevantElevator.length > 0 && `${relevantElevator.length} Aufzug${relevantElevator.length > 1 ? 'e' : ''}`}
+          </div>
+        </div>
+        <span style={{ fontSize: '12px', opacity: 0.5 }}>{expanded ? '▼' : '▶'}</span>
+      </div>
+
+      {expanded && (
+        <div style={{ padding: '0 16px 16px' }}>
+          {/* Linienstörungen */}
+          {relevantDisruptions.map((d, i) => (
+            <div key={`transit-${i}`} style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              padding: '10px 12px',
+              marginBottom: i < relevantDisruptions.length - 1 ? '8px' : 0,
+              background: 'rgba(255, 152, 0, 0.15)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 152, 0, 0.25)',
+            }}>
+              <span style={{
+                minWidth: '36px',
+                height: '28px',
+                borderRadius: '6px',
+                background: getLineColor(d.line),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#fff',
+                flexShrink: 0,
+              }}>{d.line}</span>
+              <span style={{ fontSize: '13px', lineHeight: 1.5, flex: 1 }}>{d.message}</span>
+            </div>
+          ))}
+
+          {/* Aufzugstörungen an dieser Haltestelle */}
+          {relevantElevator.length > 0 && (
+            <div style={{
+              marginTop: relevantDisruptions.length > 0 ? '12px' : 0,
+              padding: '10px 12px',
+              background: 'rgba(255, 152, 0, 0.1)',
+              borderRadius: '8px',
+            }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🛗</span>
+                <span>Aufzug außer Betrieb</span>
+              </div>
+              {relevantElevator.map((e, i) => (
+                <div key={`elev-${i}`} style={{ fontSize: '12px', opacity: 0.9, padding: '4px 0 4px 24px' }}>
+                  {e.station}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // === MAIN COMPONENT ===
 export default function MuenchenMonitor() {
   const [departures, setDepartures] = useState([]);
@@ -898,6 +1018,7 @@ export default function MuenchenMonitor() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [displayCount, setDisplayCount] = useState(10);
   const [mounted, setMounted] = useState(false);
+  const [disruptions, setDisruptions] = useState(null);
 
   const walkTimeSeconds = walkTime * 60;
 
@@ -1073,8 +1194,31 @@ export default function MuenchenMonitor() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [displayCount, departuresWithTime.length]);
 
+  // Fetch disruptions
+  const fetchDisruptions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/muenchen/disruptions');
+      if (res.ok) {
+        const data = await res.json();
+        setDisruptions(data);
+      }
+    } catch (e) {
+      console.error('Disruptions fetch error:', e);
+    }
+  }, []);
+
+  // Disruptions laden und alle 5 Minuten aktualisieren
+  useEffect(() => {
+    fetchDisruptions();
+    const interval = setInterval(fetchDisruptions, 300000);
+    return () => clearInterval(interval);
+  }, [fetchDisruptions]);
+
   // Get main directions for leave timer
   const mainDirections = findMainDirections(departuresWithTime, walkTimeSeconds, selectedDirections);
+
+  // Get list of displayed lines for disruption filtering
+  const displayedLines = [...new Set(departuresWithTime.map(dep => dep.line))];
 
   return (
     <div style={{
@@ -1235,6 +1379,14 @@ export default function MuenchenMonitor() {
           </div>
         </div>
       )}
+
+      {/* Relevant Disruptions - unterhalb der Leave Timer Cards */}
+      <RelevantDisruptions
+        disruptions={disruptions}
+        selectedStation={selectedStation}
+        displayedLines={displayedLines}
+        getLineColor={getLineColor}
+      />
 
       {/* Main Content */}
       <main style={styles.main}>

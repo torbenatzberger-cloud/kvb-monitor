@@ -919,92 +919,136 @@ function FeedbackModal({ isOpen, onClose }) {
   );
 }
 
-// === DISRUPTIONS BANNER ===
-function DisruptionsBanner({ disruptions, getLineColor }) {
-  const [expanded, setExpanded] = useState(false);
-  
-  if (!disruptions || disruptions.summary?.total === 0) return null;
-  
-  const { tram, elevator, escalator } = disruptions;
-  const hasContent = (tram?.length || 0) + (elevator?.length || 0) + (escalator?.length || 0) > 0;
-  if (!hasContent) return null;
+// === RELEVANT DISRUPTIONS ===
+/**
+ * Relevante Störungsmeldungen - nur Linien & Haltestelle die aktuell angezeigt werden
+ * Wird unterhalb der Leave Timer Cards angezeigt
+ */
+function RelevantDisruptions({ disruptions, selectedStop, displayedLines, getLineColor }) {
+  const [expanded, setExpanded] = useState(true); // Default expanded für bessere Sichtbarkeit
+
+  if (!disruptions || !selectedStop) return null;
+
+  // Filter: Nur Linienstörungen für aktuell angezeigte Linien
+  const relevantTramDisruptions = (disruptions.tram || []).filter(d =>
+    displayedLines.includes(d.line)
+  );
+
+  // Filter: Nur Aufzug/Rolltreppe für die aktuell ausgewählte Haltestelle
+  const stationName = selectedStop.name.toLowerCase();
+  const relevantElevator = (disruptions.elevator || []).filter(e =>
+    e.station.toLowerCase().includes(stationName) || stationName.includes(e.station.toLowerCase())
+  );
+  const relevantEscalator = (disruptions.escalator || []).filter(e =>
+    e.station.toLowerCase().includes(stationName) || stationName.includes(e.station.toLowerCase())
+  );
+
+  const totalRelevant = relevantTramDisruptions.length + relevantElevator.length + relevantEscalator.length;
+
+  if (totalRelevant === 0) return null;
 
   return (
     <div style={{
-      background: 'rgba(255, 152, 0, 0.15)',
-      borderBottom: '1px solid rgba(255, 152, 0, 0.3)',
+      margin: '16px',
+      borderRadius: '12px',
+      background: 'rgba(255, 152, 0, 0.1)',
+      border: '1px solid rgba(255, 152, 0, 0.3)',
+      overflow: 'hidden',
     }}>
-      <div 
+      <div
         onClick={() => setExpanded(!expanded)}
         style={{
           display: 'flex',
           alignItems: 'center',
-          padding: '10px 16px',
+          padding: '12px 16px',
           cursor: 'pointer',
-          gap: '8px',
+          gap: '10px',
         }}
       >
-        <span style={{ fontSize: '16px' }}>⚠️</span>
-        <span style={{ flex: 1, fontSize: '13px', fontWeight: 500 }}>
-          {tram?.length > 0 && `${tram.length} Linienstörung${tram.length > 1 ? 'en' : ''}`}
-          {tram?.length > 0 && ((elevator?.length || 0) + (escalator?.length || 0) > 0) && ' • '}
-          {elevator?.length > 0 && `${elevator.length} Aufzüge`}
-          {elevator?.length > 0 && escalator?.length > 0 && ' • '}
-          {escalator?.length > 0 && `${escalator.length} Rolltreppen`}
-        </span>
-        <span style={{ fontSize: '10px', opacity: 0.6 }}>{expanded ? '▲' : '▼'}</span>
+        <span style={{ fontSize: '18px' }}>⚠️</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>
+            Aktuelle Störungen
+          </div>
+          <div style={{ fontSize: '12px', opacity: 0.7 }}>
+            {relevantTramDisruptions.length > 0 && `${relevantTramDisruptions.length} Linie${relevantTramDisruptions.length > 1 ? 'n' : ''}`}
+            {relevantTramDisruptions.length > 0 && (relevantElevator.length + relevantEscalator.length > 0) && ' • '}
+            {relevantElevator.length > 0 && `${relevantElevator.length} Aufzug${relevantElevator.length > 1 ? 'e' : ''}`}
+            {relevantElevator.length > 0 && relevantEscalator.length > 0 && ' • '}
+            {relevantEscalator.length > 0 && `${relevantEscalator.length} Rolltreppe${relevantEscalator.length > 1 ? 'n' : ''}`}
+          </div>
+        </div>
+        <span style={{ fontSize: '12px', opacity: 0.5 }}>{expanded ? '▼' : '▶'}</span>
       </div>
-      
+
       {expanded && (
-        <div style={{ padding: '0 16px 12px' }}>
-          {tram?.map((d, i) => (
+        <div style={{ padding: '0 16px 16px' }}>
+          {/* Linienstörungen */}
+          {relevantTramDisruptions.map((d, i) => (
             <div key={`tram-${i}`} style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '10px',
-              padding: '8px 0',
-              borderBottom: i < tram.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+              gap: '12px',
+              padding: '10px 12px',
+              marginBottom: i < relevantTramDisruptions.length - 1 ? '8px' : 0,
+              background: 'rgba(255, 152, 0, 0.15)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 152, 0, 0.25)',
             }}>
               <span style={{
-                minWidth: '32px',
-                height: '24px',
-                borderRadius: '4px',
+                minWidth: '36px',
+                height: '28px',
+                borderRadius: '6px',
                 background: getLineColor(d.line),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '12px',
+                fontSize: '14px',
                 fontWeight: 700,
                 color: '#fff',
+                flexShrink: 0,
               }}>{d.line}</span>
-              <span style={{ fontSize: '12px', lineHeight: 1.4, opacity: 0.9 }}>{d.message}</span>
+              <span style={{ fontSize: '13px', lineHeight: 1.5, flex: 1 }}>{d.message}</span>
             </div>
           ))}
-          
-          {elevator?.length > 0 && (
-            <div style={{ marginTop: tram?.length > 0 ? '12px' : 0 }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>🛗 Aufzugstörungen:</div>
-              {elevator.map((e, i) => (
-                <div key={`elev-${i}`} style={{ fontSize: '11px', opacity: 0.8, padding: '2px 0 2px 16px' }}>
+
+          {/* Aufzugstörungen an dieser Haltestelle */}
+          {relevantElevator.length > 0 && (
+            <div style={{
+              marginTop: relevantTramDisruptions.length > 0 ? '12px' : 0,
+              padding: '10px 12px',
+              background: 'rgba(255, 152, 0, 0.1)',
+              borderRadius: '8px',
+            }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🛗</span>
+                <span>Aufzug außer Betrieb</span>
+              </div>
+              {relevantElevator.map((e, i) => (
+                <div key={`elev-${i}`} style={{ fontSize: '12px', opacity: 0.9, padding: '4px 0 4px 24px' }}>
                   {e.station}
                 </div>
               ))}
             </div>
           )}
-          
-          {escalator?.length > 0 && (
-            <div style={{ marginTop: '12px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>↗️ Fahrtreppenstörungen:</div>
-              {escalator.slice(0, 5).map((e, i) => (
-                <div key={`esc-${i}`} style={{ fontSize: '11px', opacity: 0.8, padding: '2px 0 2px 16px' }}>
+
+          {/* Fahrtreppenstörungen an dieser Haltestelle */}
+          {relevantEscalator.length > 0 && (
+            <div style={{
+              marginTop: (relevantTramDisruptions.length > 0 || relevantElevator.length > 0) ? '12px' : 0,
+              padding: '10px 12px',
+              background: 'rgba(255, 152, 0, 0.1)',
+              borderRadius: '8px',
+            }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>↗️</span>
+                <span>Rolltreppe außer Betrieb</span>
+              </div>
+              {relevantEscalator.map((e, i) => (
+                <div key={`esc-${i}`} style={{ fontSize: '12px', opacity: 0.9, padding: '4px 0 4px 24px' }}>
                   {e.station}
                 </div>
               ))}
-              {escalator.length > 5 && (
-                <div style={{ fontSize: '11px', opacity: 0.5, padding: '2px 0 2px 16px' }}>
-                  ... und {escalator.length - 5} weitere
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -1232,6 +1276,9 @@ export default function Home() {
   // Get main directions for leave timer
   const mainDirections = findMainDirections(departuresWithTime, walkTimeSeconds, selectedDirections);
 
+  // Get list of displayed lines for disruption filtering
+  const displayedLines = [...new Set(departuresWithTime.map(dep => dep.line))];
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -1266,8 +1313,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Disruptions Banner */}
-      <DisruptionsBanner disruptions={disruptions} getLineColor={getLineColor} />
 
       {/* Settings Panel */}
       {showSettings && (
@@ -1358,6 +1403,14 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Relevant Disruptions - unterhalb der Leave Timer Cards */}
+      <RelevantDisruptions
+        disruptions={disruptions}
+        selectedStop={selectedStop}
+        displayedLines={displayedLines}
+        getLineColor={getLineColor}
+      />
 
       {/* Active Filter Info */}
       {(selectedLines.length > 0 || selectedDirections.length > 0) && (
