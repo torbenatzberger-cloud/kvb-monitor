@@ -42,13 +42,19 @@ export async function GET(request) {
     // Transformiere Response
     let stations = [];
 
-    if (data.locations && Array.isArray(data.locations)) {
-      stations = data.locations
-        .filter(loc => loc.type === 'stop')
-        .map(loc => ({
-          id: loc.id || loc.stateless,
-          name: loc.name || 'Unbekannt',
-          place: loc.place || 'Köln',
+    // VRR EFA gibt stopFinder.points.point zurück
+    // point kann ein einzelnes Objekt oder ein Array sein
+    if (data.stopFinder && data.stopFinder.points && data.stopFinder.points.point) {
+      const points = Array.isArray(data.stopFinder.points.point)
+        ? data.stopFinder.points.point
+        : [data.stopFinder.points.point];
+
+      stations = points
+        .filter(point => point.anyType === 'stop')
+        .map(point => ({
+          id: point.ref?.id || point.stateless || String(Math.random()),
+          name: point.name || 'Unbekannt',
+          place: point.ref?.place || point.locality || 'Köln',
         }))
         .slice(0, 10); // Max. 10 Ergebnisse
     }

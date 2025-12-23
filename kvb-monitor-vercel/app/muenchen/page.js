@@ -125,13 +125,13 @@ function getShortDirection(direction) {
   return short;
 }
 
-function findMainDirections(departures, walkTimeSeconds) {
+function findMainDirections(departures, walkTimeSeconds, selectedDirections = []) {
   if (departures.length === 0) return [];
-  
+
   const reachable = departures.filter(dep => dep.secondsUntil >= walkTimeSeconds);
-  
+
   if (reachable.length === 0) return [];
-  
+
   const directionMap = {};
   reachable.forEach(dep => {
     const dir = getShortDirection(dep.direction);
@@ -140,7 +140,7 @@ function findMainDirections(departures, walkTimeSeconds) {
     }
     directionMap[dir].push(dep);
   });
-  
+
   const directions = Object.entries(directionMap)
     .map(([name, deps]) => ({
       name,
@@ -148,8 +148,11 @@ function findMainDirections(departures, walkTimeSeconds) {
       count: deps.length
     }))
     .sort((a, b) => a.nextDeparture.secondsUntil - b.nextDeparture.secondsUntil);
-  
-  return directions.slice(0, 2);
+
+  // If directions are selected, show only those (max 2)
+  // Otherwise, show default 1 for Munich
+  const maxDirections = selectedDirections.length > 0 ? Math.min(selectedDirections.length, 2) : 1;
+  return directions.slice(0, maxDirections);
 }
 
 // === localStorage Helpers (legacy - now using utility functions) ===
@@ -1042,8 +1045,8 @@ export default function MuenchenMonitor() {
     setDisplayCount(prev => prev + 10);
   };
 
-  // Get main direction for leave timer (nur 1 bei Filter)
-  const mainDirection = findMainDirections(departuresWithTime, walkTimeSeconds)[0] || null;
+  // Get main direction for leave timer
+  const mainDirection = findMainDirections(departuresWithTime, walkTimeSeconds, selectedDirections)[0] || null;
 
   return (
     <div style={{
