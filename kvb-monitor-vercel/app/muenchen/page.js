@@ -1,11 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import StationAutocomplete from '../components/StationAutocomplete';
 import DirectionFilter from '../components/DirectionFilter';
 import LineFilter from '../components/LineFilter';
 import { extractDirections, normalizeDirection } from '../lib/stationUtils';
 import { saveSettings as saveSettingsUtil, loadSettings as loadSettingsUtil, addRecentSearch } from '../lib/storageUtils';
+
+// Dynamic import to prevent SSR issues
+const MapContainer = dynamic(() => import('../components/map/MapContainer'), {
+  ssr: false,
+  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>Karte lädt...</div>
+});
 
 // === CONFIG ===
 const APP_VERSION = '1.8.0';
@@ -1060,6 +1067,14 @@ export default function MuenchenMonitor() {
     setMounted(true); // Client is now hydrated
   }, []);
 
+  // Reset filters when station changes
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    // Reset line and direction filters when station changes
+    setSelectedLines([]);
+    setSelectedDirections([]);
+  }, [selectedStation?.id, settingsLoaded]); // Trigger when station ID changes
+
   // Save settings when they change
   useEffect(() => {
     if (!settingsLoaded) return;
@@ -1368,6 +1383,17 @@ export default function MuenchenMonitor() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Live Map - TEMPORARILY DISABLED */}
+      {/* TODO: Re-enable after further development */}
+      {false && selectedStation && (
+        <MapContainer
+          selectedStation={selectedStation}
+          selectedLines={selectedLines}
+          city="munich"
+          accentColor="#0065ae"
+        />
       )}
 
       {/* Hinweis wenn keine erreichbaren Bahnen */}

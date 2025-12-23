@@ -1,0 +1,79 @@
+{
+  "1": {
+    "id": "1",
+    "name": "Linie 1",
+    "longName": "Bensberg - Weiden West",
+    "type": "tram",
+    "color": "#ed1c24"
+  },
+  "3": {
+    "id": "3",
+    "name": "Linie 3",
+    "longName": "Thielenbruch - Bf Süd",
+    "type": "tram",
+    "color": "#009fe3"
+  },
+  "4": {
+    "id": "4",
+    "name": "Linie 4",
+    "longName": "Schlebusch - Bf West",
+    "type": "tram",
+    "color": "#f39200"
+  },
+  "5": {
+    "id": "5",
+    "name": "Linie 5",
+    "longName": "Ossendorf - Heumarkt",
+    "type": "tram",
+    "color": "#00963f"
+  },
+  "7": {
+    "id": "7",
+    "name": "Linie 7",
+    "longName": "Frechen - Zündorf",
+    "type": "tram",
+    "color": "#e6007e"
+  },
+  "9": {
+    "id": "9",
+    "name": "Linie 9",
+    "longName": "Königsforst - Sülz",
+    "type": "tram",
+    "color": "#c60c30"
+  },
+  "12": {
+    "id": "12",
+    "name": "Linie 12",
+    "longName": "Merkenich - Zollstock",
+    "type": "tram",
+    "color": "#a05e9e"
+  },
+  "15": {
+    "id": "15",
+    "name": "Linie 15",
+    "longName": "Ubierring - Chorweiler",
+    "type": "tram",
+    "color": "#95c11f"
+  },
+  "16": {
+    "id": "16",
+    "name": "Linie 16",
+    "longName": "Niehl - Sürth",
+    "type": "tram",
+    "color": "#009fe3"
+  },
+  "17": {
+    "id": "17",
+    "name": "Linie 17",
+    "longName": "Weiden West - Rodenkirchen",
+    "type": "tram",
+    "color": "#00963f"
+  },
+  "18": {
+    "id": "18",
+    "name": "Linie 18",
+    "longName": "Thielenbruch - Bf Süd",
+    "type": "tram",
+    "color": "#009fe3"
+  }
+}
