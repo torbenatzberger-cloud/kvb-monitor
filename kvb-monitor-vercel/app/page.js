@@ -1435,14 +1435,9 @@ export default function Home() {
         ) : departuresWithTime.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', opacity: 0.7 }}>
             <p style={{ fontSize: '14px' }}>Keine Abfahrten gefunden</p>
-            {selectedLines.length > 0 && (
+            {(selectedLines.length > 0 || selectedDirections.length > 0) && (
               <p style={{ fontSize: '12px', marginTop: '8px' }}>
-                Versuche den Linienfilter anzupassen
-              </p>
-            )}
-            {stadtbahnOnly && (
-              <p style={{ fontSize: '12px', marginTop: '8px' }}>
-                Oder deaktiviere "Nur Stadtbahn" in den Einstellungen
+                Versuche den Filter anzupassen
               </p>
             )}
           </div>
@@ -1455,7 +1450,7 @@ export default function Home() {
               opacity: 0.5,
               marginBottom: '12px',
             }}>
-              {stadtbahnOnly ? 'Stadtbahn-Abfahrten' : selectedLines.length > 0 ? 'Gefilterte Abfahrten' : 'Alle Abfahrten'}
+              {(selectedLines.length > 0 || selectedDirections.length > 0) ? 'Gefilterte Abfahrten' : 'Alle Abfahrten'}
             </p>
             <div>
               {departuresWithTime.slice(0, displayCount).map(dep => {
