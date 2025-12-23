@@ -5,9 +5,9 @@ export async function GET(request, { params }) {
   const { stationId } = await params;
   
   try {
-    // MVG API v3
-    const url = `https://www.mvg.de/api/bgw-pt/v3/departures?globalId=${encodeURIComponent(stationId)}&limit=80&offsetInMinutes=0`;
-    
+    // MVG API v3 - Erhöhtes Limit für mehr Ergebnisse
+    const url = `https://www.mvg.de/api/bgw-pt/v3/departures?globalId=${encodeURIComponent(stationId)}&limit=200&offsetInMinutes=0`;
+
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
@@ -15,20 +15,15 @@ export async function GET(request, { params }) {
       },
       next: { revalidate: 0 },
     });
-    
+
     if (!response.ok) {
       throw new Error(`MVG API error: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     // Transformiere MVG-Daten in unser Format (wie KVB)
     const departures = data
-      .filter(dep => {
-        // Nur U-Bahn, S-Bahn und Tram (keine Busse)
-        const type = dep.transportType;
-        return type === 'UBAHN' || type === 'SBAHN' || type === 'TRAM';
-      })
       .map(dep => {
         // Zeiten parsen
         const plannedTime = new Date(dep.plannedDepartureTime);

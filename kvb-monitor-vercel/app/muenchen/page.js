@@ -1042,10 +1042,24 @@ export default function MuenchenMonitor() {
     return () => clearInterval(interval);
   }, [fetchDepartures, settingsLoaded]);
 
-  // Mehr anzeigen
-  const showMore = () => {
-    setDisplayCount(prev => prev + 10);
-  };
+  // Infinite Scroll: Mehr anzeigen wenn User scrollt
+  useEffect(() => {
+    const handleScroll = () => {
+      // Prüfe ob User am Ende der Seite ist
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const pageHeight = document.documentElement.scrollHeight;
+
+      // Wenn noch 200px bis zum Ende → lade mehr
+      if (scrollPosition >= pageHeight - 200) {
+        if (displayCount < departuresWithTime.length) {
+          setDisplayCount(prev => Math.min(prev + 20, departuresWithTime.length));
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [displayCount, departuresWithTime.length]);
 
   // Get main directions for leave timer
   const mainDirections = findMainDirections(departuresWithTime, walkTimeSeconds, selectedDirections);
@@ -1327,27 +1341,15 @@ export default function MuenchenMonitor() {
               })}
             </div>
 
-            {/* Mehr anzeigen Button */}
+            {/* Infinite Scroll Indicator */}
             {displayCount < departuresWithTime.length && (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center',
-                marginTop: '16px',
+              <div style={{
+                textAlign: 'center',
+                padding: '16px',
+                fontSize: '12px',
+                opacity: 0.6,
               }}>
-                <button
-                  onClick={showMore}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                  }}
-                >
-                  Mehr anzeigen ({departuresWithTime.length - displayCount} weitere)
-                </button>
+                Scrolle für mehr Abfahrten ({departuresWithTime.length - displayCount} weitere)
               </div>
             )}
             
