@@ -155,14 +155,29 @@ export class VehicleTracker {
 
     if (elapsedSeconds < 0) {
       // Vehicle hasn't departed yet
+      console.log(`⏸️ Vehicle hasn't departed yet (elapsed: ${elapsedSeconds}s)`);
       return null;
     }
 
-    // Walk through segments to find current position
-    let cumulativeTime = 0;
     const segments = scheduleData.segments;
 
+    // Find starting segment based on departure station
+    let startIndex = 0;
+    const departureStopId = departure.stopId;
+
+    // Find first segment that starts from or goes through the departure station
     for (let i = 0; i < segments.length; i++) {
+      if (segments[i].from_stop === departureStopId) {
+        startIndex = i;
+        console.log(`✓ Found departure station at segment ${i}: ${departureStopId}`);
+        break;
+      }
+    }
+
+    // Walk through segments from departure point to find current position
+    let cumulativeTime = 0;
+
+    for (let i = startIndex; i < segments.length; i++) {
       const segmentData = segments[i];
       const segmentTime = segmentData.travel_time_seconds;
 
@@ -190,6 +205,7 @@ export class VehicleTracker {
     }
 
     // Vehicle has completed route
+    console.log(`⏸️ Vehicle completed route (elapsed: ${elapsedSeconds}s, total route time: ${cumulativeTime}s)`);
     return null;
   }
 

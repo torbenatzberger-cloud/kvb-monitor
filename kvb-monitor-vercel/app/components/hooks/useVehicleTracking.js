@@ -61,10 +61,10 @@ export function useVehicleTracking({ station, lines = [], gtfsData, enabled = tr
       // Fetch departures from current station
       const departures = await fetchDepartures(station.id);
 
-      // Filter by selected lines if specified
+      // Filter by selected lines if specified, and exclude bus lines (>100)
       const filteredDepartures = lines.length > 0
-        ? departures.filter(d => lines.includes(d.line))
-        : departures;
+        ? departures.filter(d => lines.includes(d.line) && parseInt(d.line) < 100)
+        : departures.filter(d => parseInt(d.line) < 100);
 
       // Add to network tracker
       networkTrackerRef.current.addStationData(station.id, filteredDepartures);
