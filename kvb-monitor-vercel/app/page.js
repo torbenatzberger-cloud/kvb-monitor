@@ -1,12 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import StationAutocomplete from './components/StationAutocomplete';
 import DirectionFilter from './components/DirectionFilter';
 import LineFilter from './components/LineFilter';
-import MapContainer from './components/map/MapContainer';
 import { extractDirections, normalizeDirection } from './lib/stationUtils';
 import { saveSettings as saveSettingsUtil, loadSettings as loadSettingsUtil, addRecentSearch } from './lib/storageUtils';
+
+// Dynamic import to prevent SSR issues
+const MapContainer = dynamic(() => import('./components/map/MapContainer'), {
+  ssr: false,
+  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>Karte lädt...</div>
+});
 
 // === CONFIG ===
 const APP_VERSION = '1.8.0';
