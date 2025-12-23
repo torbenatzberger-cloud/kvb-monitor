@@ -1067,6 +1067,14 @@ export default function MuenchenMonitor() {
     setMounted(true); // Client is now hydrated
   }, []);
 
+  // Reset filters when station changes
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    // Reset line and direction filters when station changes
+    setSelectedLines([]);
+    setSelectedDirections([]);
+  }, [selectedStation?.id, settingsLoaded]); // Trigger when station ID changes
+
   // Save settings when they change
   useEffect(() => {
     if (!settingsLoaded) return;

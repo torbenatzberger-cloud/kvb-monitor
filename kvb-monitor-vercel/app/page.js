@@ -1125,6 +1125,14 @@ export default function Home() {
     setSettingsLoaded(true);
   }, []);
 
+  // Reset filters when station changes
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    // Reset line and direction filters when station changes
+    setSelectedLines([]);
+    setSelectedDirections([]);
+  }, [selectedStop?.id, settingsLoaded]); // Trigger when station ID changes
+
   // Save settings when they change
   useEffect(() => {
     if (!settingsLoaded) return;
