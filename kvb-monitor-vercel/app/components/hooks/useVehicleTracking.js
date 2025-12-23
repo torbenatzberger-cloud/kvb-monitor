@@ -61,17 +61,52 @@ export function useVehicleTracking({ station, lines = [], gtfsData, enabled = tr
       // Fetch departures from current station
       const departures = await fetchDepartures(station.id);
 
-      // Filter by selected lines if specified, and exclude bus lines (>100)
-      const filteredDepartures = lines.length > 0
-        ? departures.filter(d => lines.includes(d.line) && parseInt(d.line) < 100)
-        : departures.filter(d => parseInt(d.line) < 100);
+      // Always track ALL tram/metro lines (<100) for the map, regardless of filter
+      // The filter is only for display purposes
+      const allTramDepartures = departures.filter(d => parseInt(d.line) < 100);
 
-      // Add to network tracker
-      networkTrackerRef.current.addStationData(station.id, filteredDepartures);
+      // For display filtering (used in UI)
+      const filteredDepartures = lines.length > 0
+        ? allTramDepartures.filter(d => lines.includes(d.line))
+        : allTramDepartures;
+
+      console.log(`🚊 Tracking ${allTramDepartures.length} departures (${filteredDepartures.length} match filters)`);
+
+      // Add ALL tram departures to network tracker for comprehensive map view
+      networkTrackerRef.current.addStationData(station.id, allTramDepartures);
 
       // Calculate positions
       const currentTime = new Date();
-      const positions = networkTrackerRef.current.getAllVehiclePositions(currentTime);
+
+      // LIVE MODE: Use real current time
+      // If no vehicles are found in transit, fall back to demo mode
+      let positions = networkTrackerRef.current.getAllVehiclePositions(currentTime);
+
+      // DEMO MODE FALLBACK: If no vehicles in live mode (e.g., late night), use demo time
+      if (positions.length === 0 && filteredDepartures.length > 0) {
+        console.log('⚠️ No vehicles in transit at current time, using demo mode');
+
+        // Find the latest departure time from filtered departures
+        let latestDepartureMinutes = 0;
+        filteredDepartures.forEach(dep => {
+          const depMinutes = dep.realtimeHour * 60 + dep.realtimeMinute;
+          if (depMinutes > latestDepartureMinutes) {
+            latestDepartureMinutes = depMinutes;
+          }
+        });
+
+        // Set demo time to 5 minutes after latest departure
+        const demoTime = new Date();
+        demoTime.setHours(Math.floor((latestDepartureMinutes + 5) / 60));
+        demoTime.setMinutes((latestDepartureMinutes + 5) % 60);
+        demoTime.setSeconds(0);
+
+        console.log(`🕐 Using demo time: ${demoTime.getHours()}:${demoTime.getMinutes().toString().padStart(2, '0')} (real: ${currentTime.getHours()}:${currentTime.getMinutes().toString().padStart(2, '0')}, latest departure: ${Math.floor(latestDepartureMinutes/60)}:${(latestDepartureMinutes%60).toString().padStart(2, '0')})`);
+
+        positions = networkTrackerRef.current.getAllVehiclePositions(demoTime);
+      } else {
+        console.log(`🕐 Live mode: tracking at ${currentTime.getHours()}:${currentTime.getMinutes().toString().padStart(2, '0')}`);
+      }
 
       setVehicles(positions);
       setLoading(false);

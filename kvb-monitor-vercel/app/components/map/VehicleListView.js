@@ -11,14 +11,21 @@ export default function VehicleListView({
   selectedLines,
   accentColor
 }) {
-  if (!vehicles || vehicles.length === 0) {
+  // Filter vehicles by selected lines (if any)
+  const filteredVehicles = selectedLines && selectedLines.length > 0
+    ? vehicles.filter(v => selectedLines.includes(v.line))
+    : vehicles;
+
+  if (!filteredVehicles || filteredVehicles.length === 0) {
     return (
       <div style={styles.container}>
         <div style={styles.emptyState}>
           <p style={styles.emptyIcon}>🚊</p>
           <p style={styles.emptyText}>Keine Fahrzeuge gefunden</p>
           <p style={styles.emptyHint}>
-            Warte auf Live-Abfahrten oder wähle eine andere Station
+            {vehicles.length > 0
+              ? `${vehicles.length} Fahrzeuge auf anderen Linien verfügbar. Filter anpassen?`
+              : 'Warte auf Live-Abfahrten oder wähle eine andere Station'}
           </p>
         </div>
       </div>
@@ -26,7 +33,7 @@ export default function VehicleListView({
   }
 
   // Group vehicles by line
-  const vehiclesByLine = vehicles.reduce((acc, vehicle) => {
+  const vehiclesByLine = filteredVehicles.reduce((acc, vehicle) => {
     if (!acc[vehicle.line]) {
       acc[vehicle.line] = [];
     }

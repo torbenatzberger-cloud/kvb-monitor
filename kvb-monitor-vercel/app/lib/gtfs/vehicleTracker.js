@@ -153,9 +153,38 @@ export class VehicleTracker {
 
     const elapsedSeconds = (currentTime - departureTime) / 1000;
 
+    // For demo purposes: treat vehicles departing within 2 minutes as "at station"
+    // This ensures we always have some vehicles to show
+    if (elapsedSeconds < -120) {
+      // Vehicle departs in more than 2 minutes - too far in future
+      return null;
+    }
+
     if (elapsedSeconds < 0) {
-      // Vehicle hasn't departed yet
-      console.log(`⏸️ Vehicle hasn't departed yet (elapsed: ${elapsedSeconds}s)`);
+      // Vehicle hasn't departed yet but is close (0-2 minutes)
+      // Show it at the departure station (progress = 0)
+      console.log(`🚏 Vehicle at station, departing in ${Math.abs(elapsedSeconds)}s`);
+
+      const segments = scheduleData.segments;
+      const departureStopId = departure.stopId;
+
+      // Find first segment from this station
+      for (let i = 0; i < segments.length; i++) {
+        if (segments[i].from_stop === departureStopId) {
+          const fromStop = this.stops[segments[i].from_stop];
+          const toStop = this.stops[segments[i].to_stop];
+
+          if (fromStop && toStop) {
+            return {
+              from: fromStop,
+              to: toStop,
+              travelTime: segments[i].travel_time_seconds,
+              elapsedInSegment: 0, // At station, not moving yet
+              distance_meters: segments[i].distance_meters || 0
+            };
+          }
+        }
+      }
       return null;
     }
 
