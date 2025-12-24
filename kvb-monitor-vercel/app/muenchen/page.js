@@ -15,10 +15,19 @@ const MapContainer = dynamic(() => import('../components/map/MapContainer'), {
 });
 
 // === CONFIG ===
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 
 // === CHANGELOG ===
 const CHANGELOG = [
+  {
+    version: '1.8.1',
+    date: '24.12.2025',
+    changes: [
+      'NEU: Filter werden automatisch zurückgesetzt beim Stationswechsel',
+      'Verbessert: Keine verwirrenden Filter von vorheriger Station mehr',
+      'Verhindert: Linien- und Richtungsfilter bleiben nicht hängen',
+    ],
+  },
   {
     version: '1.8.0',
     date: '23.12.2025',
