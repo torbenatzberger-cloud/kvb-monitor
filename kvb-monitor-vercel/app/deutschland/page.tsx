@@ -32,12 +32,8 @@ interface Station {
 interface Departure {
   line: string;
   direction: string;
-  plannedHour: number;
-  plannedMinute: number;
-  plannedTimeFormatted: string;
-  realtimeHour: number;
-  realtimeMinute: number;
-  realtimeTimeFormatted: string;
+  plannedWhen: string;
+  realtimeWhen: string;
   delay: number;
   platform: string | null;
   cancelled: boolean;
@@ -69,16 +65,15 @@ function getLineColor(line: string): string {
   return '#666666';
 }
 
-function calculateSecondsUntil(hour: number, minute: number): number {
+function calculateSecondsUntil(isoTimestamp: string): number {
+  const departureTime = new Date(isoTimestamp);
   const now = new Date();
-  const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  let departureSeconds = hour * 3600 + minute * 60;
+  return Math.floor((departureTime.getTime() - now.getTime()) / 1000);
+}
 
-  if (departureSeconds < nowSeconds - 12 * 3600) {
-    departureSeconds += 24 * 3600;
-  }
-
-  return departureSeconds - nowSeconds;
+function formatDepartureTime(isoTimestamp: string): string {
+  const date = new Date(isoTimestamp);
+  return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatTime(totalSeconds: number): string {
@@ -368,7 +363,7 @@ function LeaveTimerCard({ departure, walkTimeSeconds, mounted = false }: { depar
       </div>
       <ProgressBar secondsUntilLeave={secondsUntilLeave} walkTimeSeconds={walkTimeSeconds} mounted={mounted} />
       <div style={{ fontSize: '11px', opacity: 0.5, marginTop: '10px' }}>
-        Abfahrt {departure.realtimeTimeFormatted}
+        Abfahrt {formatDepartureTime(departure.realtimeWhen)}
         {departure.delay > 0 && ` (+${departure.delay})`}
         {departure.platform && ` • Gl. ${departure.platform}`}
       </div>
@@ -604,8 +599,8 @@ export default function DeutschlandMonitor() {
   const departuresWithTime = filteredDepartures
     .map(dep => ({
       ...dep,
-      secondsUntil: calculateSecondsUntil(dep.realtimeHour, dep.realtimeMinute),
-      minutesUntil: Math.floor(calculateSecondsUntil(dep.realtimeHour, dep.realtimeMinute) / 60),
+      secondsUntil: calculateSecondsUntil(dep.realtimeWhen),
+      minutesUntil: Math.floor(calculateSecondsUntil(dep.realtimeWhen) / 60),
     }))
     .filter(dep => (dep.secondsUntil ?? 0) > -60)
     .sort((a, b) => (a.secondsUntil ?? 0) - (b.secondsUntil ?? 0));
@@ -960,7 +955,7 @@ export default function DeutschlandMonitor() {
                         alignItems: 'center',
                         gap: '6px',
                       }}>
-                        <span>{dep.plannedTimeFormatted}</span>
+                        <span>{formatDepartureTime(dep.plannedWhen)}</span>
                         {dep.delay > 0 && <span style={{ color: '#ff6b6b' }}>+{dep.delay}</span>}
                         {dep.platform && <span>• Gl. {dep.platform}</span>}
                       </div>

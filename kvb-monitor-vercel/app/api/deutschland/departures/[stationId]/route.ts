@@ -122,18 +122,9 @@ export async function GET(request: Request, { params }: RouteParams) {
         return {
           line,
           direction: dep.direction || dep.destination?.name || 'Unbekannt',
-          plannedHour: plannedTime.getHours(),
-          plannedMinute: plannedTime.getMinutes(),
-          plannedTimeFormatted: plannedTime.toLocaleTimeString('de-DE', {
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
-          realtimeHour: realtimeTime.getHours(),
-          realtimeMinute: realtimeTime.getMinutes(),
-          realtimeTimeFormatted: realtimeTime.toLocaleTimeString('de-DE', {
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
+          // Send ISO timestamps for client-side time calculation
+          plannedWhen: dep.plannedWhen,
+          realtimeWhen: dep.when || dep.plannedWhen,
           delay,
           platform: dep.platform || null,
           cancelled: dep.cancelled || false,
