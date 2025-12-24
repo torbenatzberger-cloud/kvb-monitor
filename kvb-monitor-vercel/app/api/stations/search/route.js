@@ -59,16 +59,29 @@ export async function GET(request) {
       stations = points
         .filter(point => point.type === 'stop')
         .filter(point => {
-          // Nur Köln-Ergebnisse
-          const place = point.ref?.place || '';
-          return place.toLowerCase() === 'köln';
+          // Erweiterte Filterlogik für Köln-Ergebnisse
+          const place = (point.ref?.place || '').toLowerCase();
+          const name = (point.name || '').toLowerCase();
+
+          // Akzeptiere wenn:
+          // 1. place ist genau "köln"
+          // 2. place startet mit "köln" (z.B. "Köln-Nippes")
+          // 3. name enthält "köln" (z.B. "Köln Hbf")
+          return place === 'köln' ||
+                 place.startsWith('köln') ||
+                 name.includes('köln');
         })
         .map(point => ({
           id: point.ref?.id || point.stateless || String(Math.random()),
           name: point.name || 'Unbekannt',
           place: point.ref?.place || 'Köln',
         }))
-        .slice(0, 10); // Max. 10 Ergebnisse
+        .slice(0, 15); // Max. 15 Ergebnisse (erhöht von 10)
+    }
+
+    // Debug-Logging (nur in Development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 Search "${query}": ${stations.length} results`);
     }
 
     return NextResponse.json({
