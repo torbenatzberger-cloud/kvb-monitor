@@ -80,7 +80,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     // Cleanup alte Cache-Einträge
     cleanupCache();
 
-    const url = `${DB_API_BASE}/stops/${encodeURIComponent(stationId)}/departures?duration=${duration}&results=100`;
+    const url = `${DB_API_BASE}/stops/${encodeURIComponent(stationId)}/departures?duration=${duration}&results=300`;
 
     const response = await fetchWithRateLimit(url);
 
