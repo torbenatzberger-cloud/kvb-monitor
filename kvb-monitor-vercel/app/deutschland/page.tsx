@@ -421,6 +421,7 @@ function TransportTypeFilter({
               ...styles.transportTypeBtn,
               background: isSelected ? config.color : 'transparent',
               borderColor: config.color,
+              color: '#fff',
               opacity: isSelected ? 1 : 0.5,
             }}
           >
