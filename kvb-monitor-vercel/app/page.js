@@ -7,6 +7,7 @@ import DirectionFilter from './components/DirectionFilter';
 import LineFilter from './components/LineFilter';
 import { extractDirections, normalizeDirection } from './lib/stationUtils';
 import { saveSettings as saveSettingsUtil, loadSettings as loadSettingsUtil, addRecentSearch } from './lib/storageUtils';
+import Line5Map from './components/Line5Map';
 
 // Dynamic import to prevent SSR issues
 const MapContainer = dynamic(() => import('./components/map/MapContainer'), {
@@ -1095,6 +1096,7 @@ export default function Home() {
   const [displayCount, setDisplayCount] = useState(10);
   const [disruptions, setDisruptions] = useState(null);
   const [disruptedLines, setDisruptedLines] = useState(new Set());
+  const [showLineMap, setShowLineMap] = useState(false); // NEW: Toggle für Linie 5 Karte
 
   const walkTimeSeconds = walkTime * 60;
 
@@ -1324,6 +1326,16 @@ export default function Home() {
           </div>
         </div>
         <div style={styles.headerButtons}>
+          <button
+            style={{
+              ...styles.settingsBtn,
+              background: showLineMap ? '#00963f' : 'rgba(255,255,255,0.1)',
+            }}
+            onClick={() => setShowLineMap(!showLineMap)}
+            title="Linie 5 Live-Karte"
+          >
+            🗺️
+          </button>
           <button style={styles.settingsBtn} onClick={() => setShowSettings(!showSettings)}>
             ⚙️
           </button>
@@ -1400,8 +1412,16 @@ export default function Home() {
         </div>
       )}
 
+      {/* Line 5 Map View */}
+      {showLineMap && (
+        <Line5Map
+          selectedStop={selectedStop}
+          departures={departures}
+        />
+      )}
+
       {/* Leave Timer */}
-      {mainDirections.length > 0 && (
+      {!showLineMap && mainDirections.length > 0 && (
         <div style={styles.leaveTimerContainer}>
           <div style={{
             ...styles.leaveTimerGrid,
@@ -1430,7 +1450,7 @@ export default function Home() {
       )}
 
       {/* Hinweis wenn keine erreichbaren Bahnen */}
-      {!loading && departuresWithTime.length > 0 && mainDirections.length === 0 && (
+      {!showLineMap && !loading && departuresWithTime.length > 0 && mainDirections.length === 0 && (
         <div style={styles.leaveTimerContainer}>
           <div style={{ textAlign: 'center', padding: '20px', opacity: 0.7 }}>
             <p style={{ fontSize: '14px' }}>⏰ Keine Bahn mehr erreichbar mit {walkTime} min Gehzeit</p>
@@ -1440,15 +1460,15 @@ export default function Home() {
       )}
 
       {/* Relevant Disruptions - unterhalb der Leave Timer Cards */}
-      <RelevantDisruptions
+      {!showLineMap && <RelevantDisruptions
         disruptions={disruptions}
         selectedStop={selectedStop}
         displayedLines={displayedLines}
         getLineColor={getLineColor}
-      />
+      />}
 
       {/* Active Filter Info */}
-      {(selectedLines.length > 0 || selectedDirections.length > 0) && (
+      {!showLineMap && (selectedLines.length > 0 || selectedDirections.length > 0) && (
         <div style={{
           background: 'rgba(227, 6, 19, 0.1)',
           borderBottom: '1px solid rgba(227, 6, 19, 0.3)',
@@ -1499,7 +1519,7 @@ export default function Home() {
       )}
 
       {/* Main Content */}
-      <main style={styles.main}>
+      {!showLineMap && <main style={styles.main}>
         {!selectedStop ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚏</div>
@@ -1670,7 +1690,7 @@ export default function Home() {
             </div>
           </>
         )}
-      </main>
+      </main>}
 
       {/* Footer mit klickbarer Version */}
       <footer style={styles.footer}>
