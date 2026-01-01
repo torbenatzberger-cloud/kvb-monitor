@@ -68,23 +68,29 @@ export function useLineVehicles(departures, selectedStopId) {
       let currentSegmentIndex = -1;
       let atStation = false;
 
+      // Strecke: Butzweilerhof (Index 0, links) ←→ Heumarkt (Index 14, rechts)
+      // Position 0% = Butzweilerhof, Position 100% = Heumarkt
+
+      const timeToSelectedStation = getCumulativeTime(selectedIndex);
+      const timeFromSelectedToEnd = LINE_5_TOTAL_TIME - timeToSelectedStation;
+
       if (secondsUntilDeparture > 0) {
         // Bahn kommt noch → Position VOR der Station berechnen
-        // Wir wissen nicht genau wo sie ist, schätzen basierend auf Zeit
-        const timeFromStart = getCumulativeTime(selectedIndex);
-        const estimatedTimeAway = Math.min(secondsUntilDeparture, timeFromStart);
 
         if (isToHeumarkt) {
-          // Fährt Richtung Heumarkt → kommt von links (Ossendorf)
-          const positionTime = timeFromStart - estimatedTimeAway;
-          const result = getPositionFromTime(positionTime, false);
+          // Fährt Richtung Heumarkt (nach rechts) → kommt von links (niedrigerer Index)
+          // Bahn ist irgendwo zwischen Butzweilerhof und der aktuellen Station
+          const estimatedTimeAway = Math.min(secondsUntilDeparture, timeToSelectedStation);
+          const positionTime = timeToSelectedStation - estimatedTimeAway;
+          const result = getPositionFromTime(positionTime);
           position = result.position;
           currentSegmentIndex = result.segmentIndex;
         } else {
-          // Fährt Richtung Ossendorf → kommt von rechts (Heumarkt)
-          const timeFromEnd = LINE_5_TOTAL_TIME - getCumulativeTime(selectedIndex);
-          const positionTime = (LINE_5_TOTAL_TIME - timeFromEnd) + estimatedTimeAway;
-          const result = getPositionFromTime(positionTime, true);
+          // Fährt Richtung Ossendorf (nach links) → kommt von rechts (höherer Index)
+          // Bahn ist irgendwo zwischen Heumarkt und der aktuellen Station
+          const estimatedTimeAway = Math.min(secondsUntilDeparture, timeFromSelectedToEnd);
+          const positionTime = timeToSelectedStation + estimatedTimeAway;
+          const result = getPositionFromTime(positionTime);
           position = result.position;
           currentSegmentIndex = result.segmentIndex;
         }
@@ -93,15 +99,15 @@ export function useLineVehicles(departures, selectedStopId) {
         const timeSinceDeparture = Math.abs(secondsUntilDeparture);
 
         if (isToHeumarkt) {
-          // Fährt Richtung Heumarkt → ist jetzt rechts von der Station
-          const positionTime = getCumulativeTime(selectedIndex) + timeSinceDeparture;
-          const result = getPositionFromTime(positionTime, false);
+          // Fährt Richtung Heumarkt (nach rechts) → ist jetzt rechts von der Station (höherer Index)
+          const positionTime = timeToSelectedStation + timeSinceDeparture;
+          const result = getPositionFromTime(Math.min(positionTime, LINE_5_TOTAL_TIME));
           position = result.position;
           currentSegmentIndex = result.segmentIndex;
         } else {
-          // Fährt Richtung Ossendorf → ist jetzt links von der Station
-          const positionTime = getCumulativeTime(selectedIndex) - timeSinceDeparture;
-          const result = getPositionFromTime(Math.max(0, positionTime), false);
+          // Fährt Richtung Ossendorf (nach links) → ist jetzt links von der Station (niedrigerer Index)
+          const positionTime = timeToSelectedStation - timeSinceDeparture;
+          const result = getPositionFromTime(Math.max(0, positionTime));
           position = result.position;
           currentSegmentIndex = result.segmentIndex;
         }
@@ -152,9 +158,10 @@ export function useLineVehicles(departures, selectedStopId) {
 }
 
 /**
- * Berechne Position (0-100%) basierend auf verstrichener Zeit
+ * Berechne Position (0-100%) basierend auf verstrichener Zeit seit Butzweilerhof
+ * 0% = Butzweilerhof, 100% = Heumarkt
  */
-function getPositionFromTime(timeSeconds, reverse = false) {
+function getPositionFromTime(timeSeconds) {
   let elapsed = 0;
 
   for (let i = 0; i < LINE_5_SEGMENTS.length; i++) {
@@ -164,14 +171,10 @@ function getPositionFromTime(timeSeconds, reverse = false) {
     if (timeSeconds <= segmentEnd) {
       // Position innerhalb dieses Segments
       const progressInSegment = (timeSeconds - elapsed) / segment.travelTime;
-      const segmentStartPercent = (i / LINE_5_STOPS.length) * 100;
-      const segmentEndPercent = ((i + 1) / LINE_5_STOPS.length) * 100;
+      const segmentStartPercent = (i / (LINE_5_STOPS.length - 1)) * 100;
+      const segmentEndPercent = ((i + 1) / (LINE_5_STOPS.length - 1)) * 100;
 
-      let position = segmentStartPercent + (segmentEndPercent - segmentStartPercent) * progressInSegment;
-
-      if (reverse) {
-        position = 100 - position;
-      }
+      const position = segmentStartPercent + (segmentEndPercent - segmentStartPercent) * progressInSegment;
 
       return { position, segmentIndex: i };
     }
@@ -180,7 +183,7 @@ function getPositionFromTime(timeSeconds, reverse = false) {
   }
 
   // Am Ende der Strecke
-  return { position: reverse ? 0 : 100, segmentIndex: LINE_5_SEGMENTS.length - 1 };
+  return { position: 100, segmentIndex: LINE_5_SEGMENTS.length - 1 };
 }
 
 export default useLineVehicles;
