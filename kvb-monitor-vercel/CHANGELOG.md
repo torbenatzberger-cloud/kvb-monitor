@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-01-01
+
+### Added
+- **Line 5 Live Map**: New interactive visualization of tram line 5
+  - Toggle button in header to switch between departures and line map view
+  - Real-time train position calculation based on departure data
+  - Responsive design: vertical station list on mobile, horizontal track on desktop
+  - "Du bist hier" marker showing selected station
+  - "Ankommende Bahnen" section showing next arriving trains with progress bars
+  - Trains move along the track based on estimated travel times between stations
+
+### Technical
+- New configuration file `app/config/line5.js` with all 15 stations and travel times
+- New hook `useLineVehicles` for calculating train positions from departure data
+- Position interpolation using segment-based travel times
+- Automatic deduplication of trains at similar positions
+
 ## [1.8.1] - 2025-12-24
 
 ### Added
