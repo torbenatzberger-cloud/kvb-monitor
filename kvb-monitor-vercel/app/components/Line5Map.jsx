@@ -1,16 +1,28 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { LINE_5_STOPS, LINE_5_COLOR, getStopIndex } from '../config/line5';
 import { useLineVehicles } from './hooks/useLineVehicles';
 
 /**
- * Horizontale Streckenkarte für Linie 5
- * Zeigt Live-Positionen der Bahnen basierend auf Abfahrtsdaten
+ * Responsive Streckenkarte für Linie 5
+ * - Desktop: Horizontale Darstellung
+ * - Mobile: Vertikale Liste mit Scroll
  */
 export default function Line5Map({ selectedStop, departures }) {
   const selectedStopId = selectedStop?.id;
   const { vehicles, incomingVehicles, currentTime } = useLineVehicles(departures, selectedStopId);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Finde Index der ausgewählten Station
   const selectedStopIndex = useMemo(() => {
@@ -20,6 +32,15 @@ export default function Line5Map({ selectedStop, departures }) {
 
   // Prüfe ob die Station auf Linie 5 liegt
   const isOnLine5 = selectedStopIndex !== -1;
+
+  // Finde Bahnen die sich zwischen Stationen befinden
+  const getTrainsNearStop = (stopIndex) => {
+    return vehicles.filter(train => {
+      const trainStopIndex = Math.floor((train.position / 100) * (LINE_5_STOPS.length - 1));
+      const nextStopIndex = Math.ceil((train.position / 100) * (LINE_5_STOPS.length - 1));
+      return trainStopIndex === stopIndex || nextStopIndex === stopIndex;
+    });
+  };
 
   return (
     <div style={styles.container}>
@@ -37,89 +58,156 @@ export default function Line5Map({ selectedStop, departures }) {
         </div>
       </div>
 
-      {/* Streckenkarte */}
-      <div style={styles.mapCard}>
-        <div style={styles.trackContainer}>
-          {/* Hauptlinie */}
-          <div style={styles.track} />
+      {/* Mobile: Vertikale Liste */}
+      {isMobile ? (
+        <div style={styles.mobileCard}>
+          <div style={styles.stationList}>
+            {LINE_5_STOPS.map((stop, index) => {
+              const isSelected = stop.id === selectedStopId;
+              const trainsHere = getTrainsNearStop(index);
+              const isFirst = index === 0;
+              const isLast = index === LINE_5_STOPS.length - 1;
 
-          {/* Haltestellen */}
-          {LINE_5_STOPS.map((stop, index) => {
-            const position = (index / (LINE_5_STOPS.length - 1)) * 100;
-            const isSelected = stop.id === selectedStopId;
-
-            return (
-              <div
-                key={stop.id}
-                style={{
-                  ...styles.stopContainer,
-                  left: `${position}%`,
-                }}
-              >
-                {/* "Du bist hier" Marker */}
-                {isSelected && (
-                  <div style={styles.youAreHere}>
-                    📍 Du bist hier
+              return (
+                <div key={stop.id} style={styles.stationRow}>
+                  {/* Linke Seite: Linie mit Punkt */}
+                  <div style={styles.lineColumn}>
+                    {/* Linie oben */}
+                    {!isFirst && (
+                      <div style={styles.lineSegmentTop} />
+                    )}
+                    {/* Stationspunkt */}
+                    <div style={{
+                      ...styles.stationDot,
+                      ...(isSelected && styles.stationDotSelected),
+                      ...(isFirst || isLast ? styles.stationDotTerminal : {}),
+                    }} />
+                    {/* Linie unten */}
+                    {!isLast && (
+                      <div style={styles.lineSegmentBottom} />
+                    )}
+                    {/* Bahnen zwischen Stationen */}
+                    {trainsHere.map(train => (
+                      <div
+                        key={train.id}
+                        style={{
+                          ...styles.mobileTrainBadge,
+                          top: train.direction === 'heumarkt' ? '60%' : '40%',
+                        }}
+                      >
+                        🚃 {train.direction === 'heumarkt' ? '↓' : '↑'}
+                      </div>
+                    ))}
                   </div>
-                )}
 
-                {/* Haltestellenpunkt */}
-                <div
-                  style={{
-                    ...styles.stopDot,
-                    ...(isSelected && styles.stopDotSelected),
-                  }}
-                />
+                  {/* Rechte Seite: Stationsinfo */}
+                  <div style={{
+                    ...styles.stationInfo,
+                    ...(isSelected && styles.stationInfoSelected),
+                  }}>
+                    <div style={styles.stationName}>
+                      {isSelected && <span style={styles.youAreHereIcon}>📍</span>}
+                      {stop.name}
+                    </div>
+                    {isSelected && (
+                      <div style={styles.youAreHereLabel}>Du bist hier</div>
+                    )}
+                    {(isFirst || isLast) && (
+                      <div style={styles.terminalLabel}>
+                        {isFirst ? 'Startstation' : 'Endstation'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        /* Desktop: Horizontale Karte */
+        <div style={styles.mapCard}>
+          <div style={styles.trackContainer}>
+            {/* Hauptlinie */}
+            <div style={styles.track} />
 
-                {/* Haltestellenname */}
+            {/* Haltestellen */}
+            {LINE_5_STOPS.map((stop, index) => {
+              const position = (index / (LINE_5_STOPS.length - 1)) * 100;
+              const isSelected = stop.id === selectedStopId;
+
+              return (
                 <div
+                  key={stop.id}
                   style={{
-                    ...styles.stopName,
-                    ...(isSelected && styles.stopNameSelected),
+                    ...styles.stopContainer,
+                    left: `${position}%`,
                   }}
                 >
-                  {stop.short}
+                  {/* "Du bist hier" Marker */}
+                  {isSelected && (
+                    <div style={styles.youAreHere}>
+                      📍 Du bist hier
+                    </div>
+                  )}
+
+                  {/* Haltestellenpunkt */}
+                  <div
+                    style={{
+                      ...styles.stopDot,
+                      ...(isSelected && styles.stopDotSelected),
+                    }}
+                  />
+
+                  {/* Haltestellenname */}
+                  <div
+                    style={{
+                      ...styles.stopNameDesktop,
+                      ...(isSelected && styles.stopNameSelected),
+                    }}
+                  >
+                    {stop.short}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* Bahnen auf der Strecke */}
-          {vehicles.map((train) => {
-            const isToHeumarkt = train.direction === 'heumarkt';
+            {/* Bahnen auf der Strecke */}
+            {vehicles.map((train) => {
+              const isToHeumarkt = train.direction === 'heumarkt';
 
-            return (
-              <div
-                key={train.id}
-                style={{
-                  ...styles.trainContainer,
-                  left: `${train.position}%`,
-                  top: isToHeumarkt ? 'calc(50% - 24px)' : 'calc(50% + 24px)',
-                }}
-              >
-                <div style={styles.trainBadge}>
-                  🚃
-                  <span style={styles.trainArrow}>
-                    {isToHeumarkt ? '→' : '←'}
-                  </span>
+              return (
+                <div
+                  key={train.id}
+                  style={{
+                    ...styles.trainContainer,
+                    left: `${train.position}%`,
+                    top: isToHeumarkt ? 'calc(50% - 24px)' : 'calc(50% + 24px)',
+                  }}
+                >
+                  <div style={styles.trainBadge}>
+                    🚃
+                    <span style={styles.trainArrow}>
+                      {isToHeumarkt ? '→' : '←'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
 
-        {/* Endpunkte Labels */}
-        <div style={styles.endpoints}>
-          <span>← Butzweilerhof</span>
-          <span>Heumarkt →</span>
+          {/* Endpunkte Labels */}
+          <div style={styles.endpoints}>
+            <span>← Butzweilerhof</span>
+            <span>Heumarkt →</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Ankommende Bahnen */}
       {isOnLine5 && (
         <div style={styles.incomingCard}>
           <h3 style={styles.incomingTitle}>
-            Ankommende Bahnen an {LINE_5_STOPS[selectedStopIndex]?.short}
+            Ankommende Bahnen
           </h3>
 
           {incomingVehicles.length > 0 ? (
@@ -133,7 +221,7 @@ export default function Line5Map({ selectedStop, departures }) {
                     <div style={styles.incomingLeft}>
                       <span style={styles.lineBadgeSmall}>5</span>
                       <span style={styles.incomingDirection}>
-                        Richtung {train.destination}
+                        {train.destination}
                       </span>
                     </div>
                     <div style={styles.incomingRight}>
@@ -152,16 +240,12 @@ export default function Line5Map({ selectedStop, departures }) {
                       }}
                     />
                   </div>
-                  <div style={styles.progressLabels}>
-                    <span>Start</span>
-                    <span>Hier</span>
-                  </div>
                 </div>
               );
             })
           ) : (
             <div style={styles.noTrains}>
-              Keine ankommenden Bahnen auf Linie 5
+              Keine ankommenden Bahnen
             </div>
           )}
         </div>
@@ -170,19 +254,15 @@ export default function Line5Map({ selectedStop, departures }) {
       {/* Hinweis wenn Station nicht auf Linie 5 */}
       {!isOnLine5 && selectedStop && (
         <div style={styles.notOnLineCard}>
+          <div style={styles.notOnLineIcon}>🚋</div>
           <p style={styles.notOnLineText}>
-            Die Station <strong>{selectedStop.name}</strong> liegt nicht auf Linie 5.
+            <strong>{selectedStop.name}</strong> liegt nicht auf Linie 5
           </p>
           <p style={styles.notOnLineSubtext}>
-            Wähle eine Station der Linie 5 um die Live-Karte zu sehen.
+            Wähle eine Station der Linie 5 für die Live-Karte
           </p>
         </div>
       )}
-
-      {/* Footer */}
-      <div style={styles.footer}>
-        Linie 5 · Live-Positionen basierend auf Abfahrtsdaten
-      </div>
     </div>
   );
 }
@@ -195,7 +275,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '20px',
+    marginBottom: '16px',
   },
   headerLeft: {
     display: 'flex',
@@ -212,19 +292,123 @@ const styles = {
   },
   lineTitle: {
     color: 'white',
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: 600,
   },
   lineSubtitle: {
     color: 'rgba(255,255,255,0.5)',
-    fontSize: '13px',
+    fontSize: '12px',
   },
   time: {
     color: 'white',
-    fontSize: '28px',
+    fontSize: '24px',
     fontWeight: 300,
     fontVariantNumeric: 'tabular-nums',
   },
+
+  // === MOBILE STYLES ===
+  mobileCard: {
+    background: 'rgba(255,255,255,0.05)',
+    borderRadius: '16px',
+    padding: '16px',
+    marginBottom: '16px',
+    maxHeight: '400px',
+    overflowY: 'auto',
+  },
+  stationList: {
+    position: 'relative',
+  },
+  stationRow: {
+    display: 'flex',
+    alignItems: 'stretch',
+    minHeight: '50px',
+  },
+  lineColumn: {
+    width: '40px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  lineSegmentTop: {
+    width: '4px',
+    flex: 1,
+    background: LINE_5_COLOR,
+  },
+  lineSegmentBottom: {
+    width: '4px',
+    flex: 1,
+    background: LINE_5_COLOR,
+  },
+  stationDot: {
+    width: '14px',
+    height: '14px',
+    borderRadius: '50%',
+    background: LINE_5_COLOR,
+    border: `3px solid ${LINE_5_COLOR}`,
+    zIndex: 1,
+    flexShrink: 0,
+  },
+  stationDotSelected: {
+    width: '20px',
+    height: '20px',
+    background: '#fff',
+    border: `4px solid ${LINE_5_COLOR}`,
+    boxShadow: `0 0 12px ${LINE_5_COLOR}`,
+  },
+  stationDotTerminal: {
+    width: '18px',
+    height: '18px',
+  },
+  mobileTrainBadge: {
+    position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: LINE_5_COLOR,
+    color: 'white',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    fontSize: '11px',
+    whiteSpace: 'nowrap',
+    zIndex: 2,
+    boxShadow: `0 0 8px ${LINE_5_COLOR}80`,
+  },
+  stationInfo: {
+    flex: 1,
+    padding: '8px 12px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  stationInfoSelected: {
+    background: `${LINE_5_COLOR}20`,
+    borderRadius: '8px',
+    marginLeft: '8px',
+  },
+  stationName: {
+    color: 'white',
+    fontSize: '14px',
+    fontWeight: 500,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  youAreHereIcon: {
+    fontSize: '14px',
+  },
+  youAreHereLabel: {
+    color: LINE_5_COLOR,
+    fontSize: '11px',
+    fontWeight: 600,
+    marginTop: '2px',
+  },
+  terminalLabel: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: '11px',
+    marginTop: '2px',
+  },
+
+  // === DESKTOP STYLES ===
   mapCard: {
     background: 'rgba(255,255,255,0.05)',
     borderRadius: '16px',
@@ -267,7 +451,7 @@ const styles = {
     background: '#fff',
     boxShadow: `0 0 20px ${LINE_5_COLOR}`,
   },
-  stopName: {
+  stopNameDesktop: {
     position: 'absolute',
     top: '18px',
     left: '50%',
@@ -321,35 +505,37 @@ const styles = {
     fontSize: '12px',
     color: 'rgba(255,255,255,0.5)',
   },
+
+  // === INCOMING TRAINS ===
   incomingCard: {
     background: 'rgba(255,255,255,0.05)',
     borderRadius: '16px',
-    padding: '20px',
-    marginBottom: '20px',
+    padding: '16px',
+    marginBottom: '16px',
   },
   incomingTitle: {
     color: 'white',
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: 600,
-    marginBottom: '16px',
+    marginBottom: '12px',
     marginTop: 0,
   },
   incomingItem: {
     background: 'rgba(255,255,255,0.05)',
-    borderRadius: '12px',
-    padding: '14px',
-    marginBottom: '10px',
+    borderRadius: '10px',
+    padding: '12px',
+    marginBottom: '8px',
   },
   incomingHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '10px',
+    marginBottom: '8px',
   },
   incomingLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '8px',
   },
   lineBadgeSmall: {
     background: LINE_5_COLOR,
@@ -357,23 +543,23 @@ const styles = {
     padding: '2px 8px',
     borderRadius: '4px',
     fontWeight: 700,
-    fontSize: '13px',
+    fontSize: '12px',
   },
   incomingDirection: {
     color: 'white',
     fontWeight: 500,
-    fontSize: '14px',
+    fontSize: '13px',
   },
   incomingRight: {
     textAlign: 'right',
   },
   incomingMinutes: {
     color: 'white',
-    fontSize: '18px',
+    fontSize: '16px',
     fontWeight: 600,
   },
   progressBar: {
-    height: '6px',
+    height: '5px',
     background: 'rgba(255,255,255,0.1)',
     borderRadius: '3px',
     overflow: 'hidden',
@@ -384,37 +570,34 @@ const styles = {
     borderRadius: '3px',
     transition: 'width 1s ease',
   },
-  progressLabels: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginTop: '4px',
-    fontSize: '10px',
-    color: 'rgba(255,255,255,0.4)',
-  },
   noTrains: {
     textAlign: 'center',
-    padding: '20px',
+    padding: '16px',
     color: 'rgba(255,255,255,0.5)',
+    fontSize: '13px',
   },
+
+  // === NOT ON LINE ===
   notOnLineCard: {
     background: 'rgba(255,255,255,0.05)',
     borderRadius: '16px',
     padding: '24px',
     textAlign: 'center',
   },
+  notOnLineIcon: {
+    fontSize: '32px',
+    marginBottom: '12px',
+  },
   notOnLineText: {
     color: 'white',
     fontSize: '14px',
-    marginBottom: '8px',
+    marginBottom: '6px',
+    margin: 0,
   },
   notOnLineSubtext: {
     color: 'rgba(255,255,255,0.5)',
     fontSize: '12px',
-  },
-  footer: {
-    textAlign: 'center',
-    fontSize: '11px',
-    color: 'rgba(255,255,255,0.3)',
-    marginTop: '16px',
+    margin: 0,
+    marginTop: '6px',
   },
 };
