@@ -58,7 +58,15 @@ export default function Line5Map({ selectedStop, departures }) {
         </div>
       </div>
 
-      {/* Mobile: Vertikale Liste */}
+      {/* CSS für Pulse-Animation */}
+      <style>{`
+        @keyframes trainPulse {
+          0%, 100% { box-shadow: 0 0 8px ${LINE_5_COLOR}, 0 0 16px ${LINE_5_COLOR}60; }
+          50% { box-shadow: 0 0 12px ${LINE_5_COLOR}, 0 0 24px ${LINE_5_COLOR}80; }
+        }
+      `}</style>
+
+      {/* Mobile: Vertikale Liste mit 3 Spalten */}
       {isMobile ? (
         <div style={styles.mobileCard}>
           <div style={styles.stationList}>
@@ -68,39 +76,34 @@ export default function Line5Map({ selectedStop, departures }) {
               const isFirst = index === 0;
               const isLast = index === LINE_5_STOPS.length - 1;
 
+              // Bahnen nach Richtung aufteilen
+              const trainsToOssendorf = trainsHere.filter(t => t.direction !== 'heumarkt');
+              const trainsToHeumarkt = trainsHere.filter(t => t.direction === 'heumarkt');
+
               return (
                 <div key={stop.id} style={styles.stationRow}>
-                  {/* Linke Seite: Linie mit Punkt */}
+                  {/* Linke Spalte: Bahnen Richtung Butzweilerhof (↑) */}
+                  <div style={styles.trainColumn}>
+                    {trainsToOssendorf.map(train => (
+                      <div key={train.id} style={styles.mobileTrainContainer}>
+                        <div style={styles.trainDot} />
+                        <span style={styles.trainDirectionArrow}>↑</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Mittlere Spalte: Linie mit Stationspunkt */}
                   <div style={styles.lineColumn}>
-                    {/* Linie oben */}
-                    {!isFirst && (
-                      <div style={styles.lineSegmentTop} />
-                    )}
-                    {/* Stationspunkt */}
+                    {!isFirst && <div style={styles.lineSegmentTop} />}
                     <div style={{
                       ...styles.stationDot,
                       ...(isSelected && styles.stationDotSelected),
                       ...(isFirst || isLast ? styles.stationDotTerminal : {}),
                     }} />
-                    {/* Linie unten */}
-                    {!isLast && (
-                      <div style={styles.lineSegmentBottom} />
-                    )}
-                    {/* Bahnen zwischen Stationen */}
-                    {trainsHere.map(train => (
-                      <div
-                        key={train.id}
-                        style={{
-                          ...styles.mobileTrainBadge,
-                          top: train.direction === 'heumarkt' ? '60%' : '40%',
-                        }}
-                      >
-                        🚃 {train.direction === 'heumarkt' ? '↓' : '↑'}
-                      </div>
-                    ))}
+                    {!isLast && <div style={styles.lineSegmentBottom} />}
                   </div>
 
-                  {/* Rechte Seite: Stationsinfo */}
+                  {/* Stationsinfo */}
                   <div style={{
                     ...styles.stationInfo,
                     ...(isSelected && styles.stationInfoSelected),
@@ -117,6 +120,16 @@ export default function Line5Map({ selectedStop, departures }) {
                         {isFirst ? 'Startstation' : 'Endstation'}
                       </div>
                     )}
+                  </div>
+
+                  {/* Rechte Spalte: Bahnen Richtung Heumarkt (↓) */}
+                  <div style={styles.trainColumn}>
+                    {trainsToHeumarkt.map(train => (
+                      <div key={train.id} style={styles.mobileTrainContainer}>
+                        <div style={styles.trainDot} />
+                        <span style={styles.trainDirectionArrow}>↓</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               );
@@ -181,11 +194,11 @@ export default function Line5Map({ selectedStop, departures }) {
                   style={{
                     ...styles.trainContainer,
                     left: `${train.position}%`,
-                    top: isToHeumarkt ? 'calc(50% - 24px)' : 'calc(50% + 24px)',
+                    top: isToHeumarkt ? 'calc(50% - 20px)' : 'calc(50% + 20px)',
                   }}
                 >
                   <div style={styles.trainBadge}>
-                    🚃
+                    <div style={styles.trainDot} />
                     <span style={styles.trainArrow}>
                       {isToHeumarkt ? '→' : '←'}
                     </span>
@@ -319,12 +332,39 @@ const styles = {
     position: 'relative',
   },
   stationRow: {
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: '36px 28px 1fr 36px',
     alignItems: 'stretch',
     minHeight: '50px',
   },
+  trainColumn: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+  },
+  mobileTrainContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2px',
+  },
+  trainDot: {
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+    background: LINE_5_COLOR,
+    boxShadow: `0 0 8px ${LINE_5_COLOR}, 0 0 16px ${LINE_5_COLOR}60`,
+    animation: 'trainPulse 2s ease-in-out infinite',
+    flexShrink: 0,
+  },
+  trainDirectionArrow: {
+    fontSize: '10px',
+    color: LINE_5_COLOR,
+    fontWeight: 700,
+  },
   lineColumn: {
-    width: '40px',
+    width: '28px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -360,19 +400,6 @@ const styles = {
     width: '18px',
     height: '18px',
   },
-  mobileTrainBadge: {
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: LINE_5_COLOR,
-    color: 'white',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    fontSize: '11px',
-    whiteSpace: 'nowrap',
-    zIndex: 2,
-    boxShadow: `0 0 8px ${LINE_5_COLOR}80`,
-  },
   stationInfo: {
     flex: 1,
     padding: '8px 12px',
@@ -383,7 +410,6 @@ const styles = {
   stationInfoSelected: {
     background: `${LINE_5_COLOR}20`,
     borderRadius: '8px',
-    marginLeft: '8px',
   },
   stationName: {
     color: 'white',
@@ -485,18 +511,14 @@ const styles = {
     transition: 'left 1s linear',
   },
   trainBadge: {
-    background: LINE_5_COLOR,
-    color: 'white',
-    padding: '3px 6px',
-    borderRadius: '4px',
-    fontSize: '12px',
     display: 'flex',
     alignItems: 'center',
-    gap: '2px',
-    boxShadow: `0 0 10px ${LINE_5_COLOR}80`,
+    gap: '4px',
   },
   trainArrow: {
-    fontSize: '10px',
+    fontSize: '11px',
+    color: LINE_5_COLOR,
+    fontWeight: 700,
   },
   endpoints: {
     display: 'flex',
