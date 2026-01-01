@@ -20,6 +20,8 @@ export const LINE_5_STOPS = [
   { id: '22000024', name: 'Hans-Böckler-Platz/Bf West', short: 'Hans-Böckler' },
   { id: '22000030', name: 'Friesenplatz', short: 'Friesenplatz' },
   { id: '22000029', name: 'Appellhofplatz', short: 'Appellhof' },
+  { id: '22000752', name: 'Dom/Hbf', short: 'Dom/Hbf' },
+  { id: '22000025', name: 'Rathaus', short: 'Rathaus' },
   { id: '22000001', name: 'Heumarkt', short: 'Heumarkt' },
 ];
 
@@ -38,7 +40,9 @@ export const LINE_5_SEGMENTS = [
   { from: 10, to: 11, travelTime: 120 }, // Gutenberg → Hans-Böckler
   { from: 11, to: 12, travelTime: 90 },  // Hans-Böckler → Friesenplatz
   { from: 12, to: 13, travelTime: 90 },  // Friesenplatz → Appellhof
-  { from: 13, to: 14, travelTime: 120 }, // Appellhof → Heumarkt
+  { from: 13, to: 14, travelTime: 60 },  // Appellhof → Dom/Hbf
+  { from: 14, to: 15, travelTime: 60 },  // Dom/Hbf → Rathaus
+  { from: 15, to: 16, travelTime: 60 },  // Rathaus → Heumarkt
 ];
 
 // Gesamte Fahrzeit in Sekunden
@@ -47,7 +51,7 @@ export const LINE_5_TOTAL_TIME = LINE_5_SEGMENTS.reduce((sum, seg) => sum + seg.
 // Endstationen
 export const LINE_5_TERMINALS = {
   ossendorf: { index: 0, name: 'Butzweilerhof', direction: 'Ossendorf' },
-  heumarkt: { index: 14, name: 'Heumarkt', direction: 'Heumarkt' },
+  heumarkt: { index: 16, name: 'Heumarkt', direction: 'Heumarkt' },
 };
 
 /**
