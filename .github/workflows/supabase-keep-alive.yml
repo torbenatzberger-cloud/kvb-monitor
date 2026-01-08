@@ -1,0 +1,36 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Läuft Montag und Donnerstag um 06:00 UTC (2x pro Woche reicht)
+    - cron: '0 6 * * 1,4'
+  workflow_dispatch: # Erlaubt manuelles Auslösen
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase via API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          echo "Pinging Supabase to prevent pausing..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/tickets?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "Response: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Supabase Keep-Alive erfolgreich!"
+          else
+            echo "❌ Keep-Alive fehlgeschlagen mit Status $HTTP_CODE"
+            exit 1
+          fi
