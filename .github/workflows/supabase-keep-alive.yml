@@ -2,8 +2,8 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    # Läuft Montag und Donnerstag um 06:00 UTC (2x pro Woche reicht)
-    - cron: '0 6 * * 1,4'
+    # Läuft täglich um 06:00 UTC
+    - cron: '0 6 * * *'
   workflow_dispatch: # Erlaubt manuelles Auslösen
 
 jobs:
