@@ -45,6 +45,10 @@ export default function DirectionFilter({
     marginRight: '8px',
     marginBottom: '8px',
     transition: 'all 0.2s ease',
+    maxWidth: '200px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   };
 
   return (
