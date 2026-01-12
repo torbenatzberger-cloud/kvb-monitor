@@ -76,7 +76,14 @@ function LeaveTimerCard({ direction, nextDeparture, walkTimeSeconds }) {
     return (
       <div style={styles.timerCard}>
         <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '4px' }}>Richtung</div>
-        <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>{direction}</div>
+        <div style={{
+          fontSize: '16px',
+          fontWeight: 700,
+          marginBottom: '12px',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>{direction}</div>
         <div style={{ fontSize: '36px', fontWeight: 800, opacity: 0.4 }}>--:--</div>
         <div style={{ fontSize: '14px', opacity: 0.5, marginTop: '8px' }}>Keine Bahn</div>
       </div>
@@ -105,11 +112,18 @@ function LeaveTimerCard({ direction, nextDeparture, walkTimeSeconds }) {
   return (
     <div style={cardStyle}>
       <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '4px' }}>Richtung</div>
-      <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>{direction}</div>
-      <div style={{ 
-        fontSize: '36px', 
-        fontWeight: 800, 
-        lineHeight: 1, 
+      <div style={{
+        fontSize: '16px',
+        fontWeight: 700,
+        marginBottom: '12px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}>{direction}</div>
+      <div style={{
+        fontSize: '36px',
+        fontWeight: 800,
+        lineHeight: 1,
         marginBottom: '4px',
         color: countdownColor,
         fontVariantNumeric: 'tabular-nums',

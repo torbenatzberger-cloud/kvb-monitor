@@ -543,7 +543,14 @@ function LeaveTimerCard({ direction, walkTimeSeconds }) {
   return (
     <div style={cardStyle}>
       <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '4px' }}>Richtung</div>
-      <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>
+      <div style={{
+        fontSize: '16px',
+        fontWeight: 700,
+        marginBottom: '12px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}>
         {name}
       </div>
       <div style={{ 
