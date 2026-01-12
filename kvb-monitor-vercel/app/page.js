@@ -527,6 +527,7 @@ function LeaveTimerCard({ direction, walkTimeSeconds }) {
     textAlign: 'center',
     border: '2px solid transparent',
     transition: 'all 0.3s ease',
+    overflow: 'hidden',
     ...(isUrgent && {
       background: 'linear-gradient(135deg, rgba(227,6,19,0.3) 0%, rgba(180,0,0,0.2) 100%)',
       borderColor: '#e30613',
@@ -543,7 +544,14 @@ function LeaveTimerCard({ direction, walkTimeSeconds }) {
   return (
     <div style={cardStyle}>
       <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '4px' }}>Richtung</div>
-      <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>
+      <div style={{
+        fontSize: '16px',
+        fontWeight: 700,
+        marginBottom: '12px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}>
         {name}
       </div>
       <div style={{ 
@@ -1497,7 +1505,12 @@ export default function Home() {
           )}
           {selectedLines.length > 0 && selectedDirections.length > 0 && <span>•</span>}
           {selectedDirections.length > 0 && (
-            <span>Richtung{selectedDirections.length > 1 ? 'en' : ''}: {selectedDirections.join(', ')}</span>
+            <span style={{
+              maxWidth: '250px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>Richtung{selectedDirections.length > 1 ? 'en' : ''}: {selectedDirections.join(', ')}</span>
           )}
           <button
             onClick={() => {

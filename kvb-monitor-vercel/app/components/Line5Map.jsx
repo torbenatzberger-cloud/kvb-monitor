@@ -558,6 +558,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
+    flex: 1,
+    overflow: 'hidden',
+    minWidth: 0,
   },
   lineBadgeSmall: {
     background: LINE_5_COLOR,
@@ -571,6 +574,9 @@ const styles = {
     color: 'white',
     fontWeight: 500,
     fontSize: '13px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   incomingRight: {
     textAlign: 'right',
